@@ -1,4 +1,4 @@
-﻿namespace MenuApp.DAL.Models
+﻿namespace MenuApp.DAL.Configurations
 {
     public class DBSettings
     {

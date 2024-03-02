@@ -1,25 +1,38 @@
-﻿using MenuApp.DAL.Models;
-using MenuApp.DAL.Repositories;
+﻿using MenuApp.BLL.DTO;
+using MenuApp.BLL.Services.UserService;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MenuApp.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class YourController : ControllerBase
+    public class UserController : ControllerBase
     {
-        private readonly IUsersRepository _userRepository;
+        private readonly IUserService _userService;
 
-        public YourController(IUsersRepository userRepository)
+        public UserController(IUserService userService)
         {
-            _userRepository = userRepository;
+            _userService = userService;
         }
 
-        [HttpPost("addUser")]
-        public IActionResult AddUser([FromBody] Users user)
+        [HttpPost("register")]
+        public IActionResult Register([FromBody] RegisterDTO user)
         {
-            _userRepository.AddUser(user);
-            return Ok("User added successfully");
+            var result = _userService.RegisterUser(user);
+            if (result.Success)
+                return Ok(result);
+            else
+                return BadRequest(result.Message);
+        }
+
+        [HttpPost("refresh_token")]
+        public IActionResult RefreshToken(RefreshTokenDTO refreshToken)
+        {
+            var result = _userService.RefreshToken(refreshToken);
+            if (result.Success)
+                return Ok(result);
+            else
+                return BadRequest(result.Message);
         }
     }
 }
