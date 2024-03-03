@@ -7,8 +7,9 @@ using System.Text;
 using MenuApp.BLL.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.VisualBasic.FileIO;
 
-namespace MenuApp.BLL.Services.UserService
+namespace MenuApp.BLL.Utils
 {
     public interface IGenerateJwtToken
     {
@@ -19,25 +20,25 @@ namespace MenuApp.BLL.Services.UserService
 
     public class GenerateJwtToken : IGenerateJwtToken
     {
-        private readonly JwtSettings _jwtSettings;
+        private readonly IOptions<JwtSettings> _jwtSettings;
 
         public GenerateJwtToken(IOptions<JwtSettings> jwtSettings)
         {
-            _jwtSettings = jwtSettings.Value;
+            _jwtSettings = jwtSettings;
         }
 
         public string GenerateNewJwtToken(string userId)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_jwtSettings.JwtKey);
+            var key = Encoding.ASCII.GetBytes(_jwtSettings.Value.JwtKey);
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(new Claim[] { new Claim("UserId", userId) }),
                 Expires = DateTime.UtcNow.AddDays(1),
                 IssuedAt = DateTime.UtcNow,
-                Audience = _jwtSettings.Audience,
-                Issuer = _jwtSettings.Issuer,
+                Audience = _jwtSettings.Value.Audience,
+                Issuer = _jwtSettings.Value.Issuer,
                 SigningCredentials = new SigningCredentials(
                     new SymmetricSecurityKey(key),
                     SecurityAlgorithms.HmacSha256Signature
@@ -66,12 +67,12 @@ namespace MenuApp.BLL.Services.UserService
             {
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new SymmetricSecurityKey(
-                    Encoding.ASCII.GetBytes(_jwtSettings.JwtKey)
+                    Encoding.ASCII.GetBytes(_jwtSettings.Value.JwtKey)
                 ),
                 ValidateIssuer = true,
-                ValidIssuer = _jwtSettings.Issuer,
+                ValidIssuer = _jwtSettings.Value.Issuer,
                 ValidateAudience = true,
-                ValidAudience = _jwtSettings.Audience,
+                ValidAudience = _jwtSettings.Value.Audience,
                 ValidateLifetime = false
             };
 
@@ -97,7 +98,7 @@ namespace MenuApp.BLL.Services.UserService
 
         private bool IsJwtWithValidSecurityAlgorithm(SecurityToken securityToken)
         {
-            return (securityToken is JwtSecurityToken jwtSecurityToken)
+            return securityToken is JwtSecurityToken jwtSecurityToken
                 && jwtSecurityToken.Header.Alg.Equals(
                     SecurityAlgorithms.HmacSha256,
                     StringComparison.InvariantCultureIgnoreCase

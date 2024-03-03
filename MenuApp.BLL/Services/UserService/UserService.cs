@@ -1,14 +1,16 @@
 ﻿using MenuApp.BLL.DTO;
 using MenuApp.BLL.Services.MenuApp.BLL.Services;
+using MenuApp.BLL.Utils;
 using MenuApp.DAL.Models;
 using MenuApp.DAL.Repositories;
+using MongoDB.Bson;
 
 namespace MenuApp.BLL.Services.UserService
 {
     public interface IUserService
     {
-        ServiceResult RegisterUser(RegisterDTO user);
-        ServiceResult RefreshToken(RefreshTokenDTO refreshToken);
+        Task<ServiceResult> RegisterUser(RegisterDTO user);
+        Task<ServiceResult> RefreshToken(RefreshTokenDTO refreshToken);
     }
 
     public class UserService : IUserService
@@ -28,9 +30,9 @@ namespace MenuApp.BLL.Services.UserService
             _passwordHasher = passwordHasher;
         }
 
-        public ServiceResult RefreshToken(RefreshTokenDTO refreshToken)
+        public async Task<ServiceResult> RefreshToken(RefreshTokenDTO refreshToken)
         {
-            var user = _userRepository.GetUserByRefreshToken(refreshToken.RefreshToken);
+            var user = await _userRepository.GetUserByRefreshToken(refreshToken.RefreshToken);
 
             if (user == null)
             {
@@ -42,23 +44,26 @@ namespace MenuApp.BLL.Services.UserService
 
             string newAccessToken = _jwtTokenGenerator.GenerateNewJwtToken(user.Id.ToString());
 
-            _userRepository.UpdateUserRefreshToken(user);
+            await _userRepository.UpdateUserRefreshToken(user);
 
             return new ServiceResult(
                 true,
-                "token successfuly refreshed",
+                "Token successfully refreshed",
                 new { AccessToken = newAccessToken, RefreshToken = newRefreshToken }
             );
         }
 
-        public ServiceResult RegisterUser(RegisterDTO user)
+        public async Task<ServiceResult> RegisterUser(RegisterDTO user)
         {
             if (user.RepeatePassword != user.Password)
             {
                 return new ServiceResult(false, "Passwords do not match ");
             }
 
-            var existingUser = _userRepository.GetUserByEmailOrUsesrname(user.Username, user.Email);
+            var existingUser = await _userRepository.GetUserByEmailOrUsername(
+                user.Username,
+                user.Email
+            );
 
             if (existingUser != null)
             {
@@ -84,7 +89,7 @@ namespace MenuApp.BLL.Services.UserService
                 registredUser.Id.ToString()
             );
 
-            _userRepository.AddUser(registredUser);
+            await _userRepository.AddUser(registredUser);
 
             return new ServiceResult(
                 true,

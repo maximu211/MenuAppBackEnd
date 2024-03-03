@@ -16,9 +16,9 @@ namespace MenuApp.API.Controllers
         }
 
         [HttpPost("register")]
-        public IActionResult Register([FromBody] RegisterDTO user)
+        public async Task<IActionResult> Register([FromBody] RegisterDTO user)
         {
-            var result = _userService.RegisterUser(user);
+            var result = await _userService.RegisterUser(user);
             if (result.Success)
                 return Ok(result);
             else
@@ -26,9 +26,9 @@ namespace MenuApp.API.Controllers
         }
 
         [HttpPost("refresh_token")]
-        public IActionResult RefreshToken(RefreshTokenDTO refreshToken)
+        public async Task<IActionResult> RefreshToken(RefreshTokenDTO refreshToken)
         {
-            var result = _userService.RefreshToken(refreshToken);
+            var result = await _userService.RefreshToken(refreshToken);
             if (result.Success)
                 return Ok(result);
             else

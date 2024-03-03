@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using MenuApp.DAL.DataBaseContext;
 using MenuApp.DAL.Models;
 using MongoDB.Driver;
@@ -7,11 +8,11 @@ namespace MenuApp.DAL.Repositories
 {
     public interface IUsersRepository
     {
-        IEnumerable<Users> GetUsers();
-        void AddUser(Users user);
-        Users GetUserByEmailOrUsesrname(string userName, string email);
-        Users GetUserByRefreshToken(string refreshToken);
-        void UpdateUserRefreshToken(Users user);
+        Task<IEnumerable<Users>> GetUsers();
+        Task AddUser(Users user);
+        Task<Users> GetUserByEmailOrUsername(string userName, string email);
+        Task<Users> GetUserByRefreshToken(string refreshToken);
+        Task UpdateUserRefreshToken(Users user);
     }
 
     public class UserRepository : IUsersRepository
@@ -23,34 +24,36 @@ namespace MenuApp.DAL.Repositories
             _collection = context.GetCollection<Users>();
         }
 
-        public IEnumerable<Users> GetUsers()
+        public async Task<IEnumerable<Users>> GetUsers()
         {
-            return _collection.Find(entity => true).ToList();
+            return await _collection.Find(entity => true).ToListAsync();
         }
 
-        public void AddUser(Users user)
+        public async Task AddUser(Users user)
         {
-            _collection.InsertOne(user);
+            await _collection.InsertOneAsync(user);
         }
 
-        public Users GetUserByEmailOrUsesrname(string userName, string email)
+        public async Task<Users> GetUserByEmailOrUsername(string userName, string email)
         {
-            return _collection
+            return await _collection
                 .Find(e => e.Username == userName || e.Email == email)
-                .FirstOrDefault();
+                .FirstOrDefaultAsync();
         }
 
-        public Users GetUserByRefreshToken(string refreshToken)
+        public async Task<Users> GetUserByRefreshToken(string refreshToken)
         {
-            return _collection.Find(e => e.RefreshToken == refreshToken).FirstOrDefault();
+            return await _collection
+                .Find(e => e.RefreshToken == refreshToken)
+                .FirstOrDefaultAsync();
         }
 
-        public void UpdateUserRefreshToken(Users user)
+        public async Task UpdateUserRefreshToken(Users user)
         {
             var filter = Builders<Users>.Filter.Eq(u => u.Id, user.Id);
             var update = Builders<Users>.Update.Set(u => u.RefreshToken, user.RefreshToken);
 
-            _collection.UpdateOne(filter, update);
+            await _collection.UpdateOneAsync(filter, update);
         }
     }
 }

@@ -1,10 +1,10 @@
 ﻿using MenuApp.BLL.Services.UserService;
+using MenuApp.BLL.Utils;
 using MenuApp.DAL.Repositories;
-using static MenuApp.BLL.Services.UserService.UserService;
 
 namespace MenuApp.API.Extensions
 {
-    public static class ServiceExtensions
+    public static class UserServiceExtensions
     {
         public static IServiceCollection AddUserService(this IServiceCollection services)
         {
