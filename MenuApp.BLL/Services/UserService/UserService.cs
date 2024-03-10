@@ -2,7 +2,7 @@
 using MailKit;
 using MenuApp.BLL.DTO;
 using MenuApp.BLL.Services.MenuApp.BLL.Services;
-using MenuApp.BLL.Utils;
+using MenuApp.BLL.Utils.Authorization;
 using MenuApp.BLL.Utils.Email;
 using MenuApp.DAL.Models;
 using MenuApp.DAL.Repositories;
@@ -15,6 +15,8 @@ namespace MenuApp.BLL.Services.UserService
         Task<ServiceResult> RegisterUser(RegisterDTO user);
         Task<ServiceResult> RefreshToken(RefreshTokenDTO refreshToken);
         Task<ServiceResult> VerifyEmail(EmailVerifyDTO emailVerify);
+        Task<ServiceResult> LogIn(LogInDTO logIn);
+        Task<ServiceResult> LogOut(LogOutDTO logOut);
     }
 
     public class UserService : IUserService
@@ -50,11 +52,13 @@ namespace MenuApp.BLL.Services.UserService
             }
 
             string newRefreshToken = _jwtTokenGenerator.GenerateRefreshToken(user.Id.ToString());
-            user.RefreshToken = newRefreshToken;
 
             string newAccessToken = _jwtTokenGenerator.GenerateNewJwtToken(user.Id.ToString());
 
-            await _userRepository.UpdateUserRefreshToken(user);
+            await _userRepository.UpdateUserRefreshTokenByUserId(
+                user.Id,
+                refreshToken.RefreshToken
+            );
 
             return new ServiceResult(
                 true,
@@ -145,6 +149,49 @@ namespace MenuApp.BLL.Services.UserService
             }
             else
                 return new ServiceResult(false, "Error");
+        }
+
+        public async Task<ServiceResult> LogIn(LogInDTO logIn)
+        {
+            var user = await _userRepository.GetUserByUsername(logIn.Username);
+
+            if (user == null || !_passwordHasher.VerifyPassword(logIn.Password, user.Password))
+            {
+                return new ServiceResult(false, "User with such name or password does not exist");
+            }
+
+            string accessToken = _jwtTokenGenerator.GenerateNewJwtToken(user.Id.ToString());
+            string refreshToken = _jwtTokenGenerator.GenerateRefreshToken(user.Id.ToString());
+            await _userRepository.UpdateUserRefreshTokenByUserId(user.Id, refreshToken);
+
+            if (!user.IsEmailSubmited)
+            {
+                return new ServiceResult(
+                    false,
+                    "Email is not verified",
+                    new { IsEmailSubmited = false }
+                );
+            }
+
+            return new ServiceResult(
+                true,
+                "User succesfuly log in",
+                new
+                {
+                    AccessToken = accessToken,
+                    RefreshToken = refreshToken,
+                    IsEmailSubmited = true
+                }
+            );
+        }
+
+        public async Task<ServiceResult> LogOut(LogOutDTO logOut)
+        {
+            ObjectId userId = _jwtTokenGenerator.GetUserIdFromJwtToken(logOut.token);
+
+            await _userRepository.DeleteRefreshTokenByUserId(userId);
+
+            return new ServiceResult(true, "User successfuly log out");
         }
     }
 }

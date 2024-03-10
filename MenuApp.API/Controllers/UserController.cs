@@ -44,5 +44,25 @@ namespace MenuApp.API.Controllers
             else
                 return BadRequest(result.Message);
         }
+
+        [HttpPost("log_in")]
+        public async Task<IActionResult> LogIn(LogInDTO logIn)
+        {
+            var result = await _userService.LogIn(logIn);
+            if (result.Success)
+                return Ok(result);
+            else
+                return BadRequest(result.Message);
+        }
+
+        [HttpPost("log_out")]
+        public async Task<IActionResult> LogOut(LogOutDTO logOut)
+        {
+            var result = await _userService.LogOut(logOut);
+            if (result.Success)
+                return Ok(result);
+            else
+                return BadRequest(result.Message);
+        }
     }
 }

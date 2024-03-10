@@ -12,7 +12,7 @@ using MongoDB.Bson;
 using MongoDB.Bson.IO;
 using Newtonsoft.Json;
 
-namespace MenuApp.BLL.Utils
+namespace MenuApp.BLL.Utils.Authorization
 {
     public interface IGenerateJwtToken
     {

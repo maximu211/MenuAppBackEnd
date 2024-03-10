@@ -2,7 +2,7 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace MenuApp.BLL.Utils
+namespace MenuApp.BLL.Utils.Authorization
 {
     public interface IPasswordHasher
     {

@@ -1,5 +1,5 @@
 ﻿using MenuApp.BLL.Services.UserService;
-using MenuApp.BLL.Utils;
+using MenuApp.BLL.Utils.Authorization;
 using MenuApp.BLL.Utils.Email;
 using MenuApp.DAL.Repositories;
 

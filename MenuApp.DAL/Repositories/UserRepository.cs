@@ -13,8 +13,10 @@ namespace MenuApp.DAL.Repositories
         Task AddUser(Users user);
         Task<Users> GetUserByEmailOrUsername(string userName, string email);
         Task<Users> GetUserByRefreshToken(string refreshToken);
-        Task UpdateUserRefreshToken(Users user);
+        Task<Users> GetUserByUsername(string userName);
+        Task UpdateUserRefreshTokenByUserId(ObjectId userId, string refreshToken);
         Task SubmitUserEmail(ObjectId userId);
+        Task DeleteRefreshTokenByUserId(ObjectId userId);
     }
 
     public class UserRepository : IUsersRepository
@@ -43,6 +45,11 @@ namespace MenuApp.DAL.Repositories
                 .FirstOrDefaultAsync();
         }
 
+        public async Task<Users> GetUserByUsername(string userName)
+        {
+            return await _collection.Find(e => e.Username == userName).FirstOrDefaultAsync();
+        }
+
         public async Task<Users> GetUserByRefreshToken(string refreshToken)
         {
             return await _collection
@@ -50,10 +57,10 @@ namespace MenuApp.DAL.Repositories
                 .FirstOrDefaultAsync();
         }
 
-        public async Task UpdateUserRefreshToken(Users user)
+        public async Task UpdateUserRefreshTokenByUserId(ObjectId userId, string refreshToken)
         {
-            var filter = Builders<Users>.Filter.Eq(u => u.Id, user.Id);
-            var update = Builders<Users>.Update.Set(u => u.RefreshToken, user.RefreshToken);
+            var filter = Builders<Users>.Filter.Eq(u => u.Id, userId);
+            var update = Builders<Users>.Update.Set(u => u.RefreshToken, refreshToken);
 
             await _collection.UpdateOneAsync(filter, update);
         }
@@ -62,6 +69,14 @@ namespace MenuApp.DAL.Repositories
         {
             var filter = Builders<Users>.Filter.Eq(u => u.Id, userId);
             var update = Builders<Users>.Update.Set(u => u.IsEmailSubmited, true);
+
+            await _collection.UpdateOneAsync(filter, update);
+        }
+
+        public async Task DeleteRefreshTokenByUserId(ObjectId userId)
+        {
+            var filter = Builders<Users>.Filter.Eq(u => u.Id, userId);
+            var update = Builders<Users>.Update.Set(u => u.RefreshToken, string.Empty);
 
             await _collection.UpdateOneAsync(filter, update);
         }
