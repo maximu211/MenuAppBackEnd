@@ -1,8 +1,9 @@
 ﻿using MenuApp.BLL.Services.UserService;
 using MenuApp.BLL.Utils;
+using MenuApp.BLL.Utils.Email;
 using MenuApp.DAL.Repositories;
 
-namespace MenuApp.API.Extensions
+namespace MenuApp.API.Extensions.ServiceExtensions
 {
     public static class UserServiceExtensions
     {
@@ -12,6 +13,7 @@ namespace MenuApp.API.Extensions
             services.AddSingleton<IGenerateJwtToken, GenerateJwtToken>();
             services.AddScoped<IPasswordHasher, PasswordHasher>();
             services.AddScoped<IUserService, UserService>();
+            services.AddTransient<IEmailSender, EmailSender>();
 
             return services;
         }

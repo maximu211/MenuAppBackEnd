@@ -3,11 +3,12 @@ using System.Net.Mail;
 using MenuApp.DAL.Configurations;
 using Microsoft.Extensions.Options;
 
-namespace MenuApp.BLL.Utils
+namespace MenuApp.BLL.Utils.Email
 {
     public interface IEmailSender
     {
         Task<MailMessage> SendEmail(string receiverMail, string subject, string message);
+        string GenerateConfirmationCode();
     }
 
     public class EmailSender : IEmailSender
@@ -39,6 +40,15 @@ namespace MenuApp.BLL.Utils
             await client.SendMailAsync(mailMessage);
 
             return mailMessage;
+        }
+
+        public string GenerateConfirmationCode()
+        {
+            Random random = new Random();
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            return new string(
+                Enumerable.Repeat(chars, 8).Select(s => s[random.Next(s.Length)]).ToArray()
+            );
         }
     }
 }

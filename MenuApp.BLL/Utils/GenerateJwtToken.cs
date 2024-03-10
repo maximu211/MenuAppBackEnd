@@ -8,6 +8,9 @@ using MenuApp.BLL.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.VisualBasic.FileIO;
+using MongoDB.Bson;
+using MongoDB.Bson.IO;
+using Newtonsoft.Json;
 
 namespace MenuApp.BLL.Utils
 {
@@ -16,6 +19,7 @@ namespace MenuApp.BLL.Utils
         string GenerateNewJwtToken(string userId);
         string GenerateRefreshToken(string userId);
         ClaimsPrincipal GetPrincipalFromExpiredToken(string token);
+        ObjectId GetUserIdFromJwtToken(string token);
     }
 
     public class GenerateJwtToken : IGenerateJwtToken
@@ -103,6 +107,43 @@ namespace MenuApp.BLL.Utils
                     SecurityAlgorithms.HmacSha256,
                     StringComparison.InvariantCultureIgnoreCase
                 );
+        }
+
+        public ObjectId GetUserIdFromJwtToken(string token)
+        {
+            // Розділити токен на частини
+            string[] tokenParts = token.Split('.');
+
+            if (tokenParts.Length != 3)
+            {
+                throw new Exception("Invalid JWT token format.");
+            }
+
+            // Декодувати корисну інформацію (payload), яка знаходиться в другій частині токену
+            string encodedPayload = tokenParts[1];
+            string decodedPayload = Encoding.UTF8.GetString(
+                Base64UrlEncoder.DecodeBytes(encodedPayload)
+            );
+
+            // Розпарсити декодований JSON, щоб отримати клейми
+            JwtPayload payload = Newtonsoft.Json.JsonConvert.DeserializeObject<JwtPayload>(
+                decodedPayload
+            );
+
+            // Отримати ідентифікатор користувача з клейма "UserId"
+            if (payload.TryGetValue("UserId", out var userIdClaim) && userIdClaim != null)
+            {
+                if (ObjectId.TryParse(userIdClaim.ToString(), out ObjectId userId))
+                {
+                    return userId;
+                }
+                else
+                {
+                    throw new Exception("User id claim in JWT token is not in the correct format.");
+                }
+            }
+
+            throw new Exception("User id claim not found in JWT token.");
         }
     }
 }

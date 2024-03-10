@@ -1,4 +1,5 @@
-using MenuApp.API.Extensions;
+using MenuApp.API.Extensions.Configuration;
+using MenuApp.API.Extensions.ServiceExtensions;
 using MenuApp.BLL.Configuration;
 using MenuApp.BLL.Services.UserService;
 using MenuApp.DAL.Configurations;
@@ -17,6 +18,7 @@ builder.Services.ConfigureProjectSettings(configuration);
 builder.Services.AddMongoDBConfiguration(configuration);
 
 builder.Services.AddUserService();
+builder.Services.AddConfirmationCodesService();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

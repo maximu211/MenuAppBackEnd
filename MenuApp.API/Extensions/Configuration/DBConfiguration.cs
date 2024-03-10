@@ -1,7 +1,7 @@
 ﻿using MenuApp.DAL.Configurations;
 using MenuApp.DAL.DataBaseContext;
 
-namespace MenuApp.API.Extensions
+namespace MenuApp.API.Extensions.Configuration
 {
     public static class MongoDBExtensions
     {

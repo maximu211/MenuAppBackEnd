@@ -1,7 +1,7 @@
 ﻿using MenuApp.BLL.Configuration;
 using MenuApp.DAL.Configurations;
 
-namespace MenuApp.API.Extensions
+namespace MenuApp.API.Extensions.Configuration
 {
     public static class ProjectConfigurationExtension
     {

@@ -34,5 +34,15 @@ namespace MenuApp.API.Controllers
             else
                 return BadRequest(result.Message);
         }
+
+        [HttpPost("verify_email")]
+        public async Task<IActionResult> VerifyEmail(EmailVerifyDTO emailVerify)
+        {
+            var result = await _userService.VerifyEmail(emailVerify);
+            if (result.Success)
+                return Ok(result);
+            else
+                return BadRequest(result.Message);
+        }
     }
 }

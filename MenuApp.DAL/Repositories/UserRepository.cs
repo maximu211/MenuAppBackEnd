@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using MenuApp.DAL.DataBaseContext;
 using MenuApp.DAL.Models;
+using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace MenuApp.DAL.Repositories
@@ -13,6 +14,7 @@ namespace MenuApp.DAL.Repositories
         Task<Users> GetUserByEmailOrUsername(string userName, string email);
         Task<Users> GetUserByRefreshToken(string refreshToken);
         Task UpdateUserRefreshToken(Users user);
+        Task SubmitUserEmail(ObjectId userId);
     }
 
     public class UserRepository : IUsersRepository
@@ -52,6 +54,14 @@ namespace MenuApp.DAL.Repositories
         {
             var filter = Builders<Users>.Filter.Eq(u => u.Id, user.Id);
             var update = Builders<Users>.Update.Set(u => u.RefreshToken, user.RefreshToken);
+
+            await _collection.UpdateOneAsync(filter, update);
+        }
+
+        public async Task SubmitUserEmail(ObjectId userId)
+        {
+            var filter = Builders<Users>.Filter.Eq(u => u.Id, userId);
+            var update = Builders<Users>.Update.Set(u => u.IsEmailSubmited, true);
 
             await _collection.UpdateOneAsync(filter, update);
         }

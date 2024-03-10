@@ -1,6 +1,9 @@
-﻿using MenuApp.BLL.DTO;
+﻿using System.IdentityModel.Tokens.Jwt;
+using MailKit;
+using MenuApp.BLL.DTO;
 using MenuApp.BLL.Services.MenuApp.BLL.Services;
 using MenuApp.BLL.Utils;
+using MenuApp.BLL.Utils.Email;
 using MenuApp.DAL.Models;
 using MenuApp.DAL.Repositories;
 using MongoDB.Bson;
@@ -11,6 +14,7 @@ namespace MenuApp.BLL.Services.UserService
     {
         Task<ServiceResult> RegisterUser(RegisterDTO user);
         Task<ServiceResult> RefreshToken(RefreshTokenDTO refreshToken);
+        Task<ServiceResult> VerifyEmail(EmailVerifyDTO emailVerify);
     }
 
     public class UserService : IUserService
@@ -18,16 +22,22 @@ namespace MenuApp.BLL.Services.UserService
         private readonly IUsersRepository _userRepository;
         private readonly IGenerateJwtToken _jwtTokenGenerator;
         private readonly IPasswordHasher _passwordHasher;
+        private readonly IEmailSender _emailSender;
+        private readonly IConfirmationCodesRepository _confirmationCodesRepository;
 
         public UserService(
             IUsersRepository userRepository,
             IGenerateJwtToken jwtTokenGenerator,
-            IPasswordHasher passwordHasher
+            IPasswordHasher passwordHasher,
+            IEmailSender emailSender,
+            IConfirmationCodesRepository confirmationCodesRepository
         )
         {
             _userRepository = userRepository;
             _jwtTokenGenerator = jwtTokenGenerator;
             _passwordHasher = passwordHasher;
+            _emailSender = emailSender;
+            _confirmationCodesRepository = confirmationCodesRepository;
         }
 
         public async Task<ServiceResult> RefreshToken(RefreshTokenDTO refreshToken)
@@ -85,17 +95,56 @@ namespace MenuApp.BLL.Services.UserService
 
             registredUser.RefreshToken = refreshToken;
 
+            await _userRepository.AddUser(registredUser);
+
+            string emailConfirmationCode = _emailSender.GenerateConfirmationCode();
+
+            ConfirmationCodes confirmationCode = new ConfirmationCodes
+            {
+                UserId = registredUser.Id,
+                ConfirmationCode = emailConfirmationCode,
+            };
+
+            await _confirmationCodesRepository.AddCode(confirmationCode);
+
+            try
+            {
+                string emailMessage = EmailTemplate.GenerateRegistrationEmail(
+                    user.Username,
+                    emailConfirmationCode
+                );
+                string emailSubject = "Welcome to our application";
+
+                await _emailSender.SendEmail(user.Email, emailSubject, emailMessage);
+            }
+            catch (Exception ex)
+            {
+                return new ServiceResult(false, $"Error sending email: {ex.Message}");
+            }
+
             string accessToken = _jwtTokenGenerator.GenerateNewJwtToken(
                 registredUser.Id.ToString()
             );
-
-            await _userRepository.AddUser(registredUser);
 
             return new ServiceResult(
                 true,
                 "User registered successfully",
                 new { AccessToken = accessToken, RefreshToken = refreshToken }
             );
+        }
+
+        public async Task<ServiceResult> VerifyEmail(EmailVerifyDTO emailVerify)
+        {
+            ObjectId userId = _jwtTokenGenerator.GetUserIdFromJwtToken(emailVerify.token);
+            var code = await _confirmationCodesRepository.GetConfirmationCode(userId);
+
+            if (code == emailVerify.verificationCode)
+            {
+                await _userRepository.SubmitUserEmail(userId);
+                return new ServiceResult(true, "Email succesfully verified");
+            }
+            else
+                return new ServiceResult(false, "Error");
         }
     }
 }
