@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MenuApp.BLL.DTO
+namespace MenuApp.BLL.DTO.UserDTOs
 {
-    public class RefreshTokenDTO
+    public class LogOutDTO
     {
-        public required string RefreshToken { get; set; }
+        public required string Token { get; set; }
     }
 }

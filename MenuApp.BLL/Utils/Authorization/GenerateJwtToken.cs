@@ -1,16 +1,12 @@
 ﻿using System;
 using System.IdentityModel.Tokens.Jwt;
-using System.Runtime.Intrinsics.Arm;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using MenuApp.BLL.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.VisualBasic.FileIO;
 using MongoDB.Bson;
-using MongoDB.Bson.IO;
-using Newtonsoft.Json;
 
 namespace MenuApp.BLL.Utils.Authorization
 {
@@ -20,6 +16,7 @@ namespace MenuApp.BLL.Utils.Authorization
         string GenerateRefreshToken(string userId);
         ClaimsPrincipal GetPrincipalFromExpiredToken(string token);
         ObjectId GetUserIdFromJwtToken(string token);
+        bool IsJwtTokenValid(string token);
     }
 
     public class GenerateJwtToken : IGenerateJwtToken
@@ -45,7 +42,7 @@ namespace MenuApp.BLL.Utils.Authorization
                 Issuer = _jwtSettings.Value.Issuer,
                 SigningCredentials = new SigningCredentials(
                     new SymmetricSecurityKey(key),
-                    SecurityAlgorithms.HmacSha256Signature
+                    SecurityAlgorithms.HmacSha256
                 )
             };
 
@@ -111,7 +108,6 @@ namespace MenuApp.BLL.Utils.Authorization
 
         public ObjectId GetUserIdFromJwtToken(string token)
         {
-            // Розділити токен на частини
             string[] tokenParts = token.Split('.');
 
             if (tokenParts.Length != 3)
@@ -119,21 +115,21 @@ namespace MenuApp.BLL.Utils.Authorization
                 throw new Exception("Invalid JWT token format.");
             }
 
-            // Декодувати корисну інформацію (payload), яка знаходиться в другій частині токену
             string encodedPayload = tokenParts[1];
             string decodedPayload = Encoding.UTF8.GetString(
                 Base64UrlEncoder.DecodeBytes(encodedPayload)
             );
 
-            // Розпарсити декодований JSON, щоб отримати клейми
             JwtPayload payload = Newtonsoft.Json.JsonConvert.DeserializeObject<JwtPayload>(
                 decodedPayload
             );
 
-            // Отримати ідентифікатор користувача з клейма "UserId"
             if (payload.TryGetValue("UserId", out var userIdClaim) && userIdClaim != null)
             {
-                if (ObjectId.TryParse(userIdClaim.ToString(), out ObjectId userId))
+                if (
+                    userIdClaim is string userIdString
+                    && ObjectId.TryParse(userIdString, out ObjectId userId)
+                )
                 {
                     return userId;
                 }
@@ -144,6 +140,50 @@ namespace MenuApp.BLL.Utils.Authorization
             }
 
             throw new Exception("User id claim not found in JWT token.");
+        }
+
+        public bool IsJwtTokenValid(string token)
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var tokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(
+                    Encoding.ASCII.GetBytes(_jwtSettings.Value.JwtKey)
+                ),
+                ValidateIssuer = true,
+                ValidIssuer = _jwtSettings.Value.Issuer,
+                ValidateAudience = true,
+                ValidAudience = _jwtSettings.Value.Audience,
+                ValidateLifetime = true
+            };
+
+            try
+            {
+                SecurityToken validatedToken;
+                var principal = tokenHandler.ValidateToken(
+                    token,
+                    tokenValidationParameters,
+                    out validatedToken
+                );
+
+                if (
+                    validatedToken is JwtSecurityToken jwtSecurityToken
+                    && jwtSecurityToken.Header.Alg.Equals(
+                        SecurityAlgorithms.HmacSha256,
+                        StringComparison.InvariantCultureIgnoreCase
+                    )
+                )
+                {
+                    return true;
+                }
+
+                return false;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
     }
 }

@@ -11,12 +11,17 @@ namespace MenuApp.DAL.Repositories
     {
         Task<IEnumerable<Users>> GetUsers();
         Task AddUser(Users user);
-        Task<Users> GetUserByEmailOrUsername(string userName, string email);
+        Task<bool> IsUserExistsByEmail(string userName);
         Task<Users> GetUserByRefreshToken(string refreshToken);
-        Task<Users> GetUserByUsername(string userName);
+        Task<bool> IsUserExistsByUsername(string userName);
         Task UpdateUserRefreshTokenByUserId(ObjectId userId, string refreshToken);
         Task SubmitUserEmail(ObjectId userId);
         Task DeleteRefreshTokenByUserId(ObjectId userId);
+        Task UpdateUserEmail(ObjectId userId, string newEmail);
+        Task SetNewPassword(ObjectId userId, string newPassword);
+        Task SetUsernameAndPassword(ObjectId userId, string username, string password);
+        Task<Users> GetUserByUsername(string username);
+        Task SetRefreshTokenById(ObjectId userId, string refreshToken);
     }
 
     public class UserRepository : IUsersRepository
@@ -38,16 +43,18 @@ namespace MenuApp.DAL.Repositories
             await _collection.InsertOneAsync(user);
         }
 
-        public async Task<Users> GetUserByEmailOrUsername(string userName, string email)
+        public async Task<bool> IsUserExistsByEmail(string email)
         {
-            return await _collection
-                .Find(e => e.Username == userName || e.Email == email)
-                .FirstOrDefaultAsync();
+            var user = await _collection.Find(e => e.Email == email).FirstOrDefaultAsync();
+
+            return user != null;
         }
 
-        public async Task<Users> GetUserByUsername(string userName)
+        public async Task<bool> IsUserExistsByUsername(string userName)
         {
-            return await _collection.Find(e => e.Username == userName).FirstOrDefaultAsync();
+            var user = await _collection.Find(e => e.Username == userName).FirstOrDefaultAsync();
+
+            return user != null;
         }
 
         public async Task<Users> GetUserByRefreshToken(string refreshToken)
@@ -77,6 +84,47 @@ namespace MenuApp.DAL.Repositories
         {
             var filter = Builders<Users>.Filter.Eq(u => u.Id, userId);
             var update = Builders<Users>.Update.Set(u => u.RefreshToken, string.Empty);
+
+            await _collection.UpdateOneAsync(filter, update);
+        }
+
+        public async Task UpdateUserEmail(ObjectId userId, string newEmail)
+        {
+            var filter = Builders<Users>.Filter.Eq(u => u.Id, userId);
+            var update = Builders<Users>.Update.Set(u => u.Email, newEmail);
+
+            await _collection.UpdateOneAsync(filter, update);
+        }
+
+        public async Task SetNewPassword(ObjectId userId, string newPassword)
+        {
+            var filter = Builders<Users>.Filter.Eq(u => u.Id, userId);
+            var update = Builders<Users>.Update.Set(u => u.Password, newPassword);
+
+            await _collection.UpdateOneAsync(filter, update);
+        }
+
+        public async Task SetUsernameAndPassword(ObjectId userId, string username, string password)
+        {
+            var filter = Builders<Users>.Filter.Eq(u => u.Id, userId);
+
+            var update = Builders<Users>
+                .Update.Set(u => u.Username, username)
+                .Set(u => u.Password, password);
+
+            await _collection.UpdateOneAsync(filter, update);
+        }
+
+        public async Task<Users> GetUserByUsername(string username)
+        {
+            return await _collection.Find(e => e.Username == username).FirstOrDefaultAsync();
+        }
+
+        public async Task SetRefreshTokenById(ObjectId userId, string refreshToken)
+        {
+            var filter = Builders<Users>.Filter.Eq(u => u.Id, userId);
+
+            var update = Builders<Users>.Update.Set(u => u.RefreshToken, refreshToken);
 
             await _collection.UpdateOneAsync(filter, update);
         }

@@ -5,11 +5,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MenuApp.BLL.DTO
+namespace MenuApp.BLL.DTO.UserDTOs
 {
     public class EmailVerifyDTO
     {
-        public required string verificationCode { get; set; }
-        public required string token { get; set; }
+        public required string VerificationCode { get; set; }
+        public required string Token { get; set; }
     }
 }

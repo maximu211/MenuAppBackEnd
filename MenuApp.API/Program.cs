@@ -1,19 +1,20 @@
 using MenuApp.API.Extensions.Configuration;
 using MenuApp.API.Extensions.ServiceExtensions;
-using MenuApp.BLL.Configuration;
-using MenuApp.BLL.Services.UserService;
-using MenuApp.DAL.Configurations;
-using MenuApp.DAL.DataBaseContext;
-using MenuApp.DAL.Models;
-using MenuApp.DAL.Repositories;
-using Microsoft.Extensions.DependencyInjection;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 
+var loger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .Enrich.FromLogContext()
+    .CreateLogger();
+
+builder.Logging.ClearProviders();
+builder.Logging.AddSerilog(loger);
+
 builder.Services.AddControllers();
 
-builder.Configuration.AddJsonFile("appsettings.json");
 builder.Services.ConfigureProjectSettings(configuration);
 builder.Services.AddMongoDBConfiguration(configuration);
 
@@ -31,8 +32,22 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+    app.UseCors(builder =>
+        builder
+            .WithOrigins("http://localhost:7296")
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials()
+    );
+}
+
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

@@ -13,7 +13,7 @@ namespace MenuApp.DAL.Repositories
     public interface IConfirmationCodesRepository
     {
         Task AddCode(ConfirmationCodes confirmationCode);
-        Task<string> GetConfirmationCode(ObjectId userId);
+        Task<string> GetConfirmationCodeByUserId(ObjectId userId);
     }
 
     public class ConfirmationCodesRepository : IConfirmationCodesRepository
@@ -30,7 +30,7 @@ namespace MenuApp.DAL.Repositories
             await _collection.InsertOneAsync(confirmationCode);
         }
 
-        public async Task<string> GetConfirmationCode(ObjectId userId)
+        public async Task<string> GetConfirmationCodeByUserId(ObjectId userId)
         {
             var confirmation = await _collection
                 .Find(e => e.UserId == userId)
