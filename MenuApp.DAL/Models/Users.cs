@@ -16,5 +16,6 @@ namespace MenuApp.DAL.Models
         public required string Email { get; set; }
         public string? RefreshToken { get; set; }
         public bool IsEmailSubmited { get; set; } = false;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

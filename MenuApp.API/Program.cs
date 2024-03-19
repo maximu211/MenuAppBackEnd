@@ -1,5 +1,6 @@
 using MenuApp.API.Extensions.Configuration;
 using MenuApp.API.Extensions.ServiceExtensions;
+using MenuApp.BLL.Workers;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,6 +18,9 @@ builder.Services.AddControllers();
 
 builder.Services.ConfigureProjectSettings(configuration);
 builder.Services.AddMongoDBConfiguration(configuration);
+
+builder.Services.AddHostedService<CodesCleanUpWorker>();
+builder.Services.AddHostedService<UsersCleanUpWorker>();
 
 builder.Services.AddUserService();
 builder.Services.AddConfirmationCodesService();

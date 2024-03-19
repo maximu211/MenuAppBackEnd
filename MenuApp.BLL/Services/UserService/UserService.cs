@@ -17,8 +17,8 @@ namespace MenuApp.BLL.Services.UserService
         Task<ServiceResult> VerifyEmail(EmailVerifyDTO emailVerify);
         Task<ServiceResult> LogIn(LogInDTO logIn);
         Task<ServiceResult> LogOut(LogOutDTO logOut);
-        Task<ServiceResult> ResendEmailConfirmation(
-            ResendEmailConfirmationDTO resendEmailConfirmation
+        Task<ServiceResult> UpdateEmailAndSendCode(
+            UpdateEmailAndSendCodeDTO updateEmailAndSendCode
         );
         Task<ServiceResult> SendVerificationCodeToRecoverPassword(
             SendVerificatonCodeToRecoverPasswordDTO sendVerificatonCodeToRecoverPassword
@@ -26,6 +26,9 @@ namespace MenuApp.BLL.Services.UserService
         Task<ServiceResult> VerifyPasswordRecover(VerifyPasswordRecoverDTO verifyPasswordRecover);
         Task<ServiceResult> SetNewPassword(RecoverPasswordDTO recoverPassword);
         Task<ServiceResult> RegisterNewEmail(RegisterNewEmailDTO newEmail);
+        Task<ServiceResult> ResendConfirmationCode(
+            ResendConfirmationCodeDTO resendConfirmationCode
+        );
     }
 
     public class UserService : IUserService
@@ -175,7 +178,7 @@ namespace MenuApp.BLL.Services.UserService
                         ConfirmationCode = emailConfirmationCode,
                     };
 
-                    await _confirmationCodesRepository.AddCode(confirmationCode);
+                    await _confirmationCodesRepository.UpsertConfirmationCode(confirmationCode);
 
                     try
                     {
@@ -253,19 +256,19 @@ namespace MenuApp.BLL.Services.UserService
             }
         }
 
-        public async Task<ServiceResult> ResendEmailConfirmation(
-            ResendEmailConfirmationDTO resendEmailConfirmation
+        public async Task<ServiceResult> UpdateEmailAndSendCode(
+            UpdateEmailAndSendCodeDTO updateEmailAndSendCode
         )
         {
-            bool isTokenValid = _jwtTokenGenerator.IsJwtTokenValid(resendEmailConfirmation.Token);
+            bool isTokenValid = _jwtTokenGenerator.IsJwtTokenValid(updateEmailAndSendCode.Token);
             if (!isTokenValid)
                 return new ServiceResult(false, "Token is not valid");
 
             ObjectId userId = _jwtTokenGenerator.GetUserIdFromJwtToken(
-                resendEmailConfirmation.Token
+                updateEmailAndSendCode.Token
             );
 
-            await _userRepository.UpdateUserEmail(userId, resendEmailConfirmation.NewEmail);
+            await _userRepository.UpdateUserEmail(userId, updateEmailAndSendCode.NewEmail);
 
             string emailConfirmationCode = _emailSender.GenerateConfirmationCode();
 
@@ -275,7 +278,7 @@ namespace MenuApp.BLL.Services.UserService
                 ConfirmationCode = emailConfirmationCode,
             };
 
-            await _confirmationCodesRepository.AddCode(confirmationCode);
+            await _confirmationCodesRepository.UpsertConfirmationCode(confirmationCode);
 
             try
             {
@@ -284,7 +287,7 @@ namespace MenuApp.BLL.Services.UserService
                 string emailSubject = "Welcome to our application";
 
                 await _emailSender.SendEmail(
-                    resendEmailConfirmation.NewEmail,
+                    updateEmailAndSendCode.NewEmail,
                     emailSubject,
                     emailMessage
                 );
@@ -313,7 +316,7 @@ namespace MenuApp.BLL.Services.UserService
                 ConfirmationCode = emailConfirmationCode,
             };
 
-            await _confirmationCodesRepository.AddCode(confirmationCode);
+            await _confirmationCodesRepository.UpsertConfirmationCode(confirmationCode);
 
             try
             {
@@ -404,7 +407,7 @@ namespace MenuApp.BLL.Services.UserService
                     ConfirmationCode = emailConfirmationCode,
                 };
 
-                await _confirmationCodesRepository.AddCode(confirmationCode);
+                await _confirmationCodesRepository.UpsertConfirmationCode(confirmationCode);
 
                 try
                 {
@@ -482,6 +485,40 @@ namespace MenuApp.BLL.Services.UserService
             {
                 return new ServiceResult(false, $"Error registering user by email: {ex.Message}");
             }
+        }
+
+        public async Task<ServiceResult> ResendConfirmationCode(
+            ResendConfirmationCodeDTO resendConfirmationCode
+        )
+        {
+            if (!_jwtTokenGenerator.IsJwtTokenValid(resendConfirmationCode.Token))
+                return new ServiceResult(false, "Token is not valid");
+
+            ObjectId userId = _jwtTokenGenerator.GetUserIdFromJwtToken(
+                resendConfirmationCode.Token
+            );
+
+            var user = await _userRepository.GetUserEmailByUserId(userId);
+
+            string emailConfirmationCode = _emailSender.GenerateConfirmationCode();
+
+            try
+            {
+                string emailMessage = EmailTemplate.GenerateEmail(
+                    user.Username,
+                    emailConfirmationCode
+                );
+
+                string emailSubject = "Verify email";
+
+                await _emailSender.SendEmail(user.Email, emailSubject, emailMessage);
+            }
+            catch (Exception ex)
+            {
+                return new ServiceResult(false, $"Error sending email: {ex.Message}");
+            }
+
+            return new ServiceResult(true, "A confirmation code has been sent to your email");
         }
     }
 }

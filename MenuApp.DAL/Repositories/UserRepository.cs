@@ -22,6 +22,8 @@ namespace MenuApp.DAL.Repositories
         Task SetUsernameAndPassword(ObjectId userId, string username, string password);
         Task<Users> GetUserByUsername(string username);
         Task SetRefreshTokenById(ObjectId userId, string refreshToken);
+        Task DeleteNonConfirmedEmails();
+        Task<Users> GetUserEmailByUserId(ObjectId userId);
     }
 
     public class UserRepository : IUsersRepository
@@ -127,6 +129,18 @@ namespace MenuApp.DAL.Repositories
             var update = Builders<Users>.Update.Set(u => u.RefreshToken, refreshToken);
 
             await _collection.UpdateOneAsync(filter, update);
+        }
+
+        public async Task DeleteNonConfirmedEmails()
+        {
+            var filter = Builders<Users>.Filter.Eq(x => x.IsEmailSubmited, false);
+
+            await _collection.DeleteManyAsync(filter);
+        }
+
+        public async Task<Users> GetUserEmailByUserId(ObjectId userId)
+        {
+            return await _collection.Find(e => e.Id == userId).FirstOrDefaultAsync();
         }
     }
 }

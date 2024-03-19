@@ -114,11 +114,23 @@ namespace MenuApp.API.Controllers
         }
 
         [HttpPost("resend_email_confirmation")]
-        public async Task<IActionResult> ResendEmailConfirmation(
-            ResendEmailConfirmationDTO resendEmailConfirmation
+        public async Task<IActionResult> UpdateEmailAndSendCode(
+            UpdateEmailAndSendCodeDTO updateEmailAndSendCode
         )
         {
-            var result = await _userService.ResendEmailConfirmation(resendEmailConfirmation);
+            var result = await _userService.UpdateEmailAndSendCode(updateEmailAndSendCode);
+            if (result.Success)
+                return Ok(result);
+            else
+                return BadRequest(result.Message);
+        }
+
+        [HttpPost("resend_confirmation_code")]
+        public async Task<IActionResult> ResendConfirmationCode(
+            ResendConfirmationCodeDTO resendEmailConfirmation
+        )
+        {
+            var result = await _userService.ResendConfirmationCode(resendEmailConfirmation);
             if (result.Success)
                 return Ok(result);
             else

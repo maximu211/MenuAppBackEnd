@@ -12,8 +12,9 @@ namespace MenuApp.DAL.Repositories
 {
     public interface IConfirmationCodesRepository
     {
-        Task AddCode(ConfirmationCodes confirmationCode);
+        Task UpsertConfirmationCode(ConfirmationCodes code);
         Task<string> GetConfirmationCodeByUserId(ObjectId userId);
+        Task DeleteExpiredCodes();
     }
 
     public class ConfirmationCodesRepository : IConfirmationCodesRepository
@@ -25,9 +26,16 @@ namespace MenuApp.DAL.Repositories
             _collection = context.GetCollection<ConfirmationCodes>();
         }
 
-        public async Task AddCode(ConfirmationCodes confirmationCode)
+        public async Task UpsertConfirmationCode(ConfirmationCodes code)
         {
-            await _collection.InsertOneAsync(confirmationCode);
+            var filter = Builders<ConfirmationCodes>.Filter.Eq(x => x.UserId, code.UserId);
+            var options = new FindOneAndReplaceOptions<ConfirmationCodes, ConfirmationCodes>
+            {
+                IsUpsert = true,
+                ReturnDocument = ReturnDocument.After
+            };
+
+            await _collection.FindOneAndReplaceAsync(filter, code, options);
         }
 
         public async Task<string> GetConfirmationCodeByUserId(ObjectId userId)
@@ -37,6 +45,20 @@ namespace MenuApp.DAL.Repositories
                 .FirstOrDefaultAsync();
 
             return confirmation.ConfirmationCode;
+        }
+
+        public async Task DeleteExpiredCodes()
+        {
+            var thresholdDate = DateTime.UtcNow.AddMinutes(1);
+
+            var filter = Builders<ConfirmationCodes>.Filter.Lt(x => x.CreatedAt, thresholdDate);
+            await _collection.DeleteManyAsync(filter);
+        }
+
+        public async Task DeleteConfirmationCodeByUserId(ObjectId userId)
+        {
+            var filter = Builders<ConfirmationCodes>.Filter.Eq(x => x.UserId, userId);
+            await _collection.FindOneAndDeleteAsync(filter);
         }
     }
 }

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MenuApp.BLL.DTO.UserDTOs
 {
-    public class ResendEmailConfirmationDTO
+    public class UpdateEmailAndSendCodeDTO
     {
         public required string Token { get; set; }
         public required string NewEmail { get; set; }

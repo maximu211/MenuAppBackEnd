@@ -12,5 +12,6 @@ namespace MenuApp.DAL.Models
         public ObjectId Id { get; set; }
         public ObjectId UserId { get; set; }
         public required string ConfirmationCode { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }
