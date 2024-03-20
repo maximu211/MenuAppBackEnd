@@ -133,7 +133,9 @@ namespace MenuApp.DAL.Repositories
 
         public async Task DeleteNonConfirmedEmails()
         {
-            var filter = Builders<Users>.Filter.Eq(x => x.IsEmailSubmited, false);
+            var filter = Builders<Users>.Filter.Where(x =>
+                x.IsEmailSubmited == false & x.CreatedAt < DateTime.UtcNow.AddDays(-1)
+            );
 
             await _collection.DeleteManyAsync(filter);
         }

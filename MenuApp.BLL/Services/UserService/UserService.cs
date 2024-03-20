@@ -6,7 +6,6 @@ using MenuApp.DAL.Models;
 using MenuApp.DAL.Repositories;
 using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
-using Serilog;
 
 namespace MenuApp.BLL.Services.UserService
 {
@@ -113,7 +112,13 @@ namespace MenuApp.BLL.Services.UserService
                 ObjectId userId = _jwtTokenGenerator.GetUserIdFromJwtToken(emailVerify.Token);
                 var code = await _confirmationCodesRepository.GetConfirmationCodeByUserId(userId);
 
-                if (code == emailVerify.VerificationCode)
+                if (code.CreatedAt < DateTime.UtcNow.AddMinutes(-1))
+                {
+                    await _confirmationCodesRepository.DeleteConfirmationCodeByUserId(userId);
+                    return new ServiceResult(false, "Verification code has been expired");
+                }
+
+                if (code.ConfirmationCode == emailVerify.ConfirmationCode)
                 {
                     await _userRepository.SubmitUserEmail(userId);
                     _logger.LogInformation(
@@ -351,10 +356,19 @@ namespace MenuApp.BLL.Services.UserService
             if (!isTokenValid)
                 return new ServiceResult(false, "Token is not valid");
 
-            var userId = _jwtTokenGenerator.GetUserIdFromJwtToken(verifyPasswordRecover.Token);
+            ObjectId userId = _jwtTokenGenerator.GetUserIdFromJwtToken(verifyPasswordRecover.Token);
             var code = await _confirmationCodesRepository.GetConfirmationCodeByUserId(userId);
 
-            return code == verifyPasswordRecover.VerificationCode
+            if (code == null)
+                return new ServiceResult(false, "Code has not found");
+
+            if (code.CreatedAt < DateTime.UtcNow.AddMinutes(-1))
+            {
+                await _confirmationCodesRepository.DeleteConfirmationCodeByUserId(userId);
+                return new ServiceResult(false, "Verification code has been expired");
+            }
+
+            return code.ConfirmationCode == verifyPasswordRecover.VerificationCode
                 ? new ServiceResult(true, "User successfuly verified", new { UserVerified = true })
                 : new ServiceResult(false, "no such code exists", new { UserVerified = false });
         }

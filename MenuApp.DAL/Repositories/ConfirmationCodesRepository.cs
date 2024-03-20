@@ -13,8 +13,8 @@ namespace MenuApp.DAL.Repositories
     public interface IConfirmationCodesRepository
     {
         Task UpsertConfirmationCode(ConfirmationCodes code);
-        Task<string> GetConfirmationCodeByUserId(ObjectId userId);
-        Task DeleteExpiredCodes();
+        Task<ConfirmationCodes> GetConfirmationCodeByUserId(ObjectId userId);
+        Task DeleteConfirmationCodeByUserId(ObjectId userId);
     }
 
     public class ConfirmationCodesRepository : IConfirmationCodesRepository
@@ -38,21 +38,13 @@ namespace MenuApp.DAL.Repositories
             await _collection.FindOneAndReplaceAsync(filter, code, options);
         }
 
-        public async Task<string> GetConfirmationCodeByUserId(ObjectId userId)
+        public async Task<ConfirmationCodes> GetConfirmationCodeByUserId(ObjectId userId)
         {
-            var confirmation = await _collection
+            var confirmationCode = await _collection
                 .Find(e => e.UserId == userId)
                 .FirstOrDefaultAsync();
 
-            return confirmation.ConfirmationCode;
-        }
-
-        public async Task DeleteExpiredCodes()
-        {
-            var thresholdDate = DateTime.UtcNow.AddMinutes(1);
-
-            var filter = Builders<ConfirmationCodes>.Filter.Lt(x => x.CreatedAt, thresholdDate);
-            await _collection.DeleteManyAsync(filter);
+            return confirmationCode;
         }
 
         public async Task DeleteConfirmationCodeByUserId(ObjectId userId)

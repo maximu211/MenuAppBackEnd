@@ -19,7 +19,6 @@ builder.Services.AddControllers();
 builder.Services.ConfigureProjectSettings(configuration);
 builder.Services.AddMongoDBConfiguration(configuration);
 
-builder.Services.AddHostedService<CodesCleanUpWorker>();
 builder.Services.AddHostedService<UsersCleanUpWorker>();
 
 builder.Services.AddUserService();
