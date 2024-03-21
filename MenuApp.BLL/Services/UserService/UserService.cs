@@ -243,7 +243,11 @@ namespace MenuApp.BLL.Services.UserService
                 bool isTokenValid = _jwtTokenGenerator.IsJwtTokenValid(logOut.Token);
                 if (!isTokenValid)
                 {
-                    _logger.LogWarning("Token is not valid for logout");
+                    _logger.LogWarning(
+                        "Token is not valid for logout: {Token}, userId: {userId}",
+                        logOut.Token,
+                        _jwtTokenGenerator.GetUserIdFromJwtToken(logOut.Token)
+                    );
                     return new ServiceResult(false, "Token is not valid");
                 }
 
@@ -265,132 +269,253 @@ namespace MenuApp.BLL.Services.UserService
             UpdateEmailAndSendCodeDTO updateEmailAndSendCode
         )
         {
-            bool isTokenValid = _jwtTokenGenerator.IsJwtTokenValid(updateEmailAndSendCode.Token);
-            if (!isTokenValid)
-                return new ServiceResult(false, "Token is not valid");
-
-            ObjectId userId = _jwtTokenGenerator.GetUserIdFromJwtToken(
-                updateEmailAndSendCode.Token
-            );
-
-            await _userRepository.UpdateUserEmail(userId, updateEmailAndSendCode.NewEmail);
-
-            string emailConfirmationCode = _emailSender.GenerateConfirmationCode();
-
-            ConfirmationCodes confirmationCode = new ConfirmationCodes
-            {
-                UserId = userId,
-                ConfirmationCode = emailConfirmationCode,
-            };
-
-            await _confirmationCodesRepository.UpsertConfirmationCode(confirmationCode);
-
             try
             {
-                string emailMessage = EmailTemplate.GenerateEmail(emailConfirmationCode);
-
-                string emailSubject = "Welcome to our application";
-
-                await _emailSender.SendEmail(
-                    updateEmailAndSendCode.NewEmail,
-                    emailSubject,
-                    emailMessage
+                ObjectId userId = _jwtTokenGenerator.GetUserIdFromJwtToken(
+                    updateEmailAndSendCode.Token
                 );
+                bool isTokenValid = _jwtTokenGenerator.IsJwtTokenValid(
+                    updateEmailAndSendCode.Token
+                );
+                if (!isTokenValid)
+                {
+                    _logger.LogWarning(
+                        "Token is not valid for update Email: {Token}, userId: {userId}",
+                        updateEmailAndSendCode.Token,
+                        userId
+                    );
+                    return new ServiceResult(false, "Token is not valid");
+                }
+
+                await _userRepository.UpdateUserEmail(userId, updateEmailAndSendCode.NewEmail);
+
+                string emailConfirmationCode = _emailSender.GenerateConfirmationCode();
+
+                ConfirmationCodes confirmationCode = new ConfirmationCodes
+                {
+                    UserId = userId,
+                    ConfirmationCode = emailConfirmationCode,
+                };
+
+                await _confirmationCodesRepository.UpsertConfirmationCode(confirmationCode);
+
+                try
+                {
+                    string emailMessage = EmailTemplate.GenerateEmail(emailConfirmationCode);
+
+                    string emailSubject = "Welcome to our application";
+
+                    await _emailSender.SendEmail(
+                        updateEmailAndSendCode.NewEmail,
+                        emailSubject,
+                        emailMessage
+                    );
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, " Error sending email to user {userId}", userId);
+                    return new ServiceResult(false, $"Error sending email: {ex.Message}");
+                }
+
+                _logger.LogInformation("email successfuly updated for user: {userId}", userId);
+                return new ServiceResult(true, "Email successfuly updated");
             }
             catch (Exception ex)
             {
-                return new ServiceResult(false, $"Error sending email: {ex.Message}");
+                _logger.LogError(ex, "An error occurred during Update Email");
+                return new ServiceResult(false, $"An error occurred during logout: {ex.Message}");
             }
-
-            return new ServiceResult(true, "Email successfuly updated");
         }
 
         public async Task<ServiceResult> SendVerificationCodeToRecoverPassword(
             SendVerificatonCodeToRecoverPasswordDTO sendVerificatonCodeToRecoverPassword
         )
         {
-            var user = await _userRepository.GetUserByUsername(
-                sendVerificatonCodeToRecoverPassword.Username
-            );
-
-            string emailConfirmationCode = _emailSender.GenerateConfirmationCode();
-
-            ConfirmationCodes confirmationCode = new ConfirmationCodes
-            {
-                UserId = user.Id,
-                ConfirmationCode = emailConfirmationCode,
-            };
-
-            await _confirmationCodesRepository.UpsertConfirmationCode(confirmationCode);
-
             try
             {
-                string emailMessage = EmailTemplate.GenerateEmail(
-                    user.Username,
-                    emailConfirmationCode
+                var user = await _userRepository.GetUserByUsername(
+                    sendVerificatonCodeToRecoverPassword.Username
                 );
 
-                string emailSubject = "Recovering password";
+                string emailConfirmationCode = _emailSender.GenerateConfirmationCode();
 
-                await _emailSender.SendEmail(user.Email, emailSubject, emailMessage);
+                ConfirmationCodes confirmationCode = new ConfirmationCodes
+                {
+                    UserId = user.Id,
+                    ConfirmationCode = emailConfirmationCode,
+                };
+
+                await _confirmationCodesRepository.UpsertConfirmationCode(confirmationCode);
+
+                try
+                {
+                    string emailMessage = EmailTemplate.GenerateEmail(
+                        user.Username,
+                        emailConfirmationCode
+                    );
+
+                    string emailSubject = "Recovering password";
+
+                    await _emailSender.SendEmail(user.Email, emailSubject, emailMessage);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error sending email to user {userId}", user.Id);
+                    return new ServiceResult(false, $"Error sending email: {ex.Message}");
+                }
+
+                var accesToken = _jwtTokenGenerator.GenerateNewJwtToken(user.Id.ToString());
+
+                _logger.LogInformation(
+                    "Verificcation code has been sent to user {userId}",
+                    user.Id
+                );
+                return new ServiceResult(
+                    true,
+                    "A confirmation code has been sent to your email",
+                    new { IsUserFound = true, AccesToken = accesToken }
+                );
             }
             catch (Exception ex)
             {
-                return new ServiceResult(false, $"Error sending email: {ex.Message}");
+                _logger.LogError(
+                    ex,
+                    "An error occurred during sending verification code to recover password"
+                );
+                return new ServiceResult(
+                    false,
+                    $"An error occurred during sending verification code to recover password: {ex.Message}"
+                );
             }
-
-            var accesToken = _jwtTokenGenerator.GenerateNewJwtToken(user.Id.ToString());
-
-            return new ServiceResult(
-                true,
-                "A confirmation code has been sent to your email",
-                new { IsUserFound = true, AccesToken = accesToken }
-            );
         }
 
         public async Task<ServiceResult> VerifyPasswordRecover(
             VerifyPasswordRecoverDTO verifyPasswordRecover
         )
         {
-            bool isTokenValid = _jwtTokenGenerator.IsJwtTokenValid(verifyPasswordRecover.Token);
-            if (!isTokenValid)
-                return new ServiceResult(false, "Token is not valid");
-
-            ObjectId userId = _jwtTokenGenerator.GetUserIdFromJwtToken(verifyPasswordRecover.Token);
-            var code = await _confirmationCodesRepository.GetConfirmationCodeByUserId(userId);
-
-            if (code == null)
-                return new ServiceResult(false, "Code has not found");
-
-            if (code.CreatedAt < DateTime.UtcNow.AddMinutes(-1))
+            try
             {
-                await _confirmationCodesRepository.DeleteConfirmationCodeByUserId(userId);
-                return new ServiceResult(false, "Verification code has been expired");
-            }
+                ObjectId userId = _jwtTokenGenerator.GetUserIdFromJwtToken(
+                    verifyPasswordRecover.Token
+                );
+                bool isTokenValid = _jwtTokenGenerator.IsJwtTokenValid(verifyPasswordRecover.Token);
+                if (!isTokenValid)
+                {
+                    _logger.LogWarning(
+                        "Token is not valid for update: {Token}, userId: {userId}",
+                        verifyPasswordRecover.Token,
+                        userId
+                    );
+                    return new ServiceResult(false, "Token is not valid");
+                }
 
-            return code.ConfirmationCode == verifyPasswordRecover.VerificationCode
-                ? new ServiceResult(true, "User successfuly verified", new { UserVerified = true })
-                : new ServiceResult(false, "no such code exists", new { UserVerified = false });
+                var code = await _confirmationCodesRepository.GetConfirmationCodeByUserId(userId);
+
+                if (code == null)
+                {
+                    _logger.LogWarning(
+                        "Verification code for user {userId} has not been found",
+                        userId
+                    );
+                    return new ServiceResult(false, "Code has not found");
+                }
+
+                if (code.CreatedAt < DateTime.UtcNow.AddMinutes(-1))
+                {
+                    await _confirmationCodesRepository.DeleteConfirmationCodeByUserId(userId);
+                    _logger.LogWarning(
+                        "Verification code for user {userId} has been expired",
+                        userId
+                    );
+                    return new ServiceResult(false, "Verification code has been expired");
+                }
+
+                if (code.ConfirmationCode == verifyPasswordRecover.VerificationCode)
+                {
+                    _logger.LogInformation(
+                        "Verification code for user {userId} has been verified",
+                        userId
+                    );
+                    return new ServiceResult(
+                        true,
+                        "User successfuly verified",
+                        new { UserVerified = true }
+                    );
+                }
+                else
+                {
+                    _logger.LogWarning(
+                        "Verification code for user {userId} has not been verified",
+                        userId
+                    );
+                    return new ServiceResult(
+                        false,
+                        "No such code exists",
+                        new { UserVerified = false }
+                    );
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    "An error occurred during Verifing password recover: {ex.Message}",
+                    ex
+                );
+                return new ServiceResult(
+                    false,
+                    $"An error occurred during Verifing password recover: {ex.Message}"
+                );
+            }
         }
 
         public async Task<ServiceResult> SetNewPassword(RecoverPasswordDTO recoverPassword)
         {
-            bool isTokenValid = _jwtTokenGenerator.IsJwtTokenValid(recoverPassword.Token);
-            if (!isTokenValid)
-                return new ServiceResult(false, "Token is not valid");
-
-            var userId = _jwtTokenGenerator.GetUserIdFromJwtToken(recoverPassword.Token);
-
-            if (
-                !(recoverPassword.Password == recoverPassword.RepeatPassword)
-                || (recoverPassword.Password.Length & recoverPassword.RepeatPassword.Length) < 8
-            )
+            try
             {
-                string hashedPassword = _passwordHasher.HashPassword(recoverPassword.Password);
-                await _userRepository.SetNewPassword(userId, hashedPassword);
-                return new ServiceResult(true, "New password succesfuly setted");
+                ObjectId userId = _jwtTokenGenerator.GetUserIdFromJwtToken(recoverPassword.Token);
+
+                bool isTokenValid = _jwtTokenGenerator.IsJwtTokenValid(recoverPassword.Token);
+                if (!isTokenValid)
+                {
+                    _logger.LogWarning(
+                        "Token is not valid for set new password: {Token}, userId: {userId}",
+                        recoverPassword.Token,
+                        userId
+                    );
+                    return new ServiceResult(false, "Token is not valid");
+                }
+
+                if (
+                    (recoverPassword.Password == recoverPassword.RepeatPassword)
+                    || (recoverPassword.Password.Length & recoverPassword.RepeatPassword.Length) > 8
+                )
+                {
+                    string hashedPassword = _passwordHasher.HashPassword(recoverPassword.Password);
+                    await _userRepository.SetNewPassword(userId, hashedPassword);
+
+                    _logger.LogInformation(
+                        "New password successfuly setted for user {userId}",
+                        userId
+                    );
+                    return new ServiceResult(true, "New password successfuly setted");
+                }
+                else
+                {
+                    _logger.LogInformation(
+                        "New password successfuly setted for user {userId}",
+                        userId
+                    );
+                    return new ServiceResult(false, "Error in setting new password");
+                }
             }
-            return new ServiceResult(false, "Error in setting new password");
+            catch (Exception ex)
+            {
+                _logger.LogError("An error occurred during setting new password: {ex.Message}", ex);
+                return new ServiceResult(
+                    false,
+                    $"An error occurred during setting new password: {ex.Message}"
+                );
+            }
         }
 
         public async Task<ServiceResult> RegisterNewEmail(RegisterNewEmailDTO registerNewEmail)
@@ -399,6 +524,10 @@ namespace MenuApp.BLL.Services.UserService
             {
                 if (await _userRepository.IsUserExistsByEmail(registerNewEmail.Email))
                 {
+                    _logger.LogWarning(
+                        "User with email {email} already registred",
+                        registerNewEmail.Email
+                    );
                     return new ServiceResult(false, "User with this email already registered");
                 }
 
@@ -443,6 +572,10 @@ namespace MenuApp.BLL.Services.UserService
                     return new ServiceResult(false, $"Error sending email: {ex.Message}");
                 }
 
+                _logger.LogInformation(
+                    "Verification code has been sent to Email {email}",
+                    registerNewEmail.Email
+                );
                 return new ServiceResult(
                     true,
                     "A confirmation email has been sent to the user",
@@ -464,19 +597,34 @@ namespace MenuApp.BLL.Services.UserService
         {
             try
             {
+                ObjectId userId = _jwtTokenGenerator.GetUserIdFromJwtToken(registerUser.Token);
+
                 if (!_jwtTokenGenerator.IsJwtTokenValid(registerUser.Token))
+                {
+                    _logger.LogWarning("Token is not valid for user {userId}", userId);
                     return new ServiceResult(false, "Token is not valid");
+                }
 
                 if (registerUser.Password != registerUser.RepeatePassword)
+                {
+                    _logger.LogWarning("User {userId} input not the same passwords", userId);
                     return new ServiceResult(false, "Passwords are not same");
+                }
 
                 if ((registerUser.Password.Length & registerUser.RepeatePassword.Length) < 8)
+                {
+                    _logger.LogWarning("User {userId} input to short password", userId);
                     return new ServiceResult(false, "Password must be longer than 8 characters");
+                }
 
                 if (await _userRepository.IsUserExistsByUsername(registerUser.Username))
-                    return new ServiceResult(false, "User with this username already exist");
-
-                ObjectId userId = _jwtTokenGenerator.GetUserIdFromJwtToken(registerUser.Token);
+                {
+                    _logger.LogError(
+                        "User with this username ({username}) already exists",
+                        registerUser.Username
+                    );
+                    return new ServiceResult(false, "User with this username already exists");
+                }
 
                 await _userRepository.SetUsernameAndPassword(
                     userId,
@@ -489,14 +637,17 @@ namespace MenuApp.BLL.Services.UserService
                     _jwtTokenGenerator.GenerateRefreshToken(userId.ToString())
                 );
 
+                _logger.LogInformation("User {userId} registered successfully", userId);
+
                 return new ServiceResult(
                     true,
-                    "User registred successfuly",
-                    new { IsUserRegistredsuccesfuly = true }
+                    "User registered successfully",
+                    new { IsUserRegisteredSuccessfully = true }
                 );
             }
             catch (Exception ex)
             {
+                _logger.LogError($"Error registering user by email: {ex.Message}");
                 return new ServiceResult(false, $"Error registering user by email: {ex.Message}");
             }
         }
@@ -505,34 +656,52 @@ namespace MenuApp.BLL.Services.UserService
             ResendConfirmationCodeDTO resendConfirmationCode
         )
         {
-            if (!_jwtTokenGenerator.IsJwtTokenValid(resendConfirmationCode.Token))
-                return new ServiceResult(false, "Token is not valid");
-
-            ObjectId userId = _jwtTokenGenerator.GetUserIdFromJwtToken(
-                resendConfirmationCode.Token
-            );
-
-            var user = await _userRepository.GetUserEmailByUserId(userId);
-
-            string emailConfirmationCode = _emailSender.GenerateConfirmationCode();
-
             try
             {
-                string emailMessage = EmailTemplate.GenerateEmail(
-                    user.Username,
-                    emailConfirmationCode
+                ObjectId userId = _jwtTokenGenerator.GetUserIdFromJwtToken(
+                    resendConfirmationCode.Token
                 );
 
-                string emailSubject = "Verify email";
+                if (!_jwtTokenGenerator.IsJwtTokenValid(resendConfirmationCode.Token))
+                {
+                    _logger.LogWarning("Token is not valid for user {userId}", userId);
+                    return new ServiceResult(false, "Token is not valid");
+                }
 
-                await _emailSender.SendEmail(user.Email, emailSubject, emailMessage);
+                var user = await _userRepository.GetUserEmailByUserId(userId);
+
+                string emailConfirmationCode = _emailSender.GenerateConfirmationCode();
+
+                try
+                {
+                    string emailMessage = EmailTemplate.GenerateEmail(
+                        user.Username,
+                        emailConfirmationCode
+                    );
+                    string emailSubject = "Verify email";
+
+                    await _emailSender.SendEmail(user.Email, emailSubject, emailMessage);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Error sending email: {ex.Message}");
+                    return new ServiceResult(false, $"Error sending email: {ex.Message}");
+                }
+
+                _logger.LogInformation(
+                    "A confirmation code has been sent to users {userId} email",
+                    userId
+                );
+                return new ServiceResult(true, "A confirmation code has been sent to your email");
             }
             catch (Exception ex)
             {
-                return new ServiceResult(false, $"Error sending email: {ex.Message}");
+                _logger.LogError($"An unexpected error occurred: {ex.Message}");
+                return new ServiceResult(
+                    false,
+                    "An unexpected error occurred while processing your request"
+                );
             }
-
-            return new ServiceResult(true, "A confirmation code has been sent to your email");
         }
     }
 }
