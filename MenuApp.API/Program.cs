@@ -1,6 +1,11 @@
+using System.Security.Cryptography.X509Certificates;
 using MenuApp.API.Extensions.Configuration;
 using MenuApp.API.Extensions.ServiceExtensions;
 using MenuApp.BLL.Workers;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.AspNetCore.Server.Kestrel.Https;
+using Microsoft.Extensions.Options;
+using MongoDB.Driver;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -29,23 +34,19 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+builder.WebHost.UseUrls("https://localhost:5001");
 
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
     app.UseCors(builder =>
-        builder
-            .WithOrigins("http://localhost:7296")
-            .AllowAnyMethod()
-            .AllowAnyHeader()
-            .AllowCredentials()
+        builder.SetIsOriginAllowed(_ => true).AllowAnyMethod().AllowAnyHeader().AllowCredentials()
     );
+}
+else
+{
+    app.UseHsts();
 }
 
 app.UseHttpsRedirection();

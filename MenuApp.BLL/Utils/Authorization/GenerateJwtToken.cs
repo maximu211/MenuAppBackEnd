@@ -36,7 +36,7 @@ namespace MenuApp.BLL.Utils.Authorization
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(new Claim[] { new Claim("UserId", userId) }),
-                Expires = DateTime.UtcNow.AddDays(1),
+                Expires = DateTime.UtcNow.AddMinutes(1),
                 IssuedAt = DateTime.UtcNow,
                 Audience = _jwtSettings.Value.Audience,
                 Issuer = _jwtSettings.Value.Issuer,
@@ -169,7 +169,9 @@ namespace MenuApp.BLL.Utils.Authorization
 
                 if (
                     validatedToken is JwtSecurityToken jwtSecurityToken
-                    && jwtSecurityToken.Header.Alg.Equals(
+                    && jwtSecurityToken.ValidTo > DateTime.UtcNow
+                    && // Додана перевірка часу дії токену
+                    jwtSecurityToken.Header.Alg.Equals(
                         SecurityAlgorithms.HmacSha256,
                         StringComparison.InvariantCultureIgnoreCase
                     )

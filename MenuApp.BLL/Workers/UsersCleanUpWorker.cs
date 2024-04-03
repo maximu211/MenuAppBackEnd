@@ -8,15 +8,10 @@ namespace MenuApp.BLL.Workers
     {
         private readonly TimeSpan _cleanInterval = TimeSpan.FromMinutes(1);
         private readonly IServiceProvider _serviceProvider;
-        private readonly IUsersRepository _usersRepository;
 
-        public UsersCleanUpWorker(
-            IServiceProvider serviceProvider,
-            IUsersRepository usersRepository
-        )
+        public UsersCleanUpWorker(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
-            _usersRepository = usersRepository;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -25,7 +20,9 @@ namespace MenuApp.BLL.Workers
             {
                 using (var scope = _serviceProvider.CreateScope())
                 {
-                    await _usersRepository.DeleteNonConfirmedEmails();
+                    var userRepository =
+                        scope.ServiceProvider.GetRequiredService<IUsersRepository>();
+                    await userRepository.DeleteNonConfirmedEmails();
                 }
 
                 await Task.Delay(_cleanInterval, stoppingToken);

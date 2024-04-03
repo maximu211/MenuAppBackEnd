@@ -76,10 +76,7 @@ namespace MenuApp.BLL.Services.UserService
                 );
                 string newAccessToken = _jwtTokenGenerator.GenerateNewJwtToken(user.Id.ToString());
 
-                await _userRepository.UpdateUserRefreshTokenByUserId(
-                    user.Id,
-                    refreshToken.RefreshToken
-                );
+                await _userRepository.UpdateUserRefreshTokenByUserId(user.Id, newRefreshToken);
 
                 _logger.LogInformation(
                     "Token successfully refreshed for user with ID: {UserId}",
