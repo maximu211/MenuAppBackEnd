@@ -1,9 +1,11 @@
-﻿using MenuApp.BLL.DTO.UserDTOs;
+﻿using System.IdentityModel.Tokens.Jwt;
+using MenuApp.BLL.DTO.UserDTOs;
 using MenuApp.BLL.Services.MenuApp.BLL.Services;
 using MenuApp.BLL.Utils.Authorization;
 using MenuApp.BLL.Utils.Email;
 using MenuApp.DAL.Models;
 using MenuApp.DAL.Repositories;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 
@@ -15,7 +17,7 @@ namespace MenuApp.BLL.Services.UserService
         Task<ServiceResult> RefreshToken(RefreshTokenDTO refreshToken);
         Task<ServiceResult> VerifyEmail(EmailVerifyDTO emailVerify);
         Task<ServiceResult> LogIn(LogInDTO logIn);
-        Task<ServiceResult> LogOut(LogOutDTO logOut);
+        Task<ServiceResult> LogOut();
         Task<ServiceResult> UpdateEmailAndSendCode(
             UpdateEmailAndSendCodeDTO updateEmailAndSendCode
         );
@@ -25,9 +27,7 @@ namespace MenuApp.BLL.Services.UserService
         Task<ServiceResult> VerifyPasswordRecover(VerifyPasswordRecoverDTO verifyPasswordRecover);
         Task<ServiceResult> SetNewPassword(RecoverPasswordDTO recoverPassword);
         Task<ServiceResult> RegisterNewEmail(RegisterNewEmailDTO newEmail);
-        Task<ServiceResult> ResendConfirmationCode(
-            ResendConfirmationCodeDTO resendConfirmationCode
-        );
+        Task<ServiceResult> ResendConfirmationCode();
     }
 
     public class UserService : IUserService
@@ -38,6 +38,7 @@ namespace MenuApp.BLL.Services.UserService
         private readonly IEmailSender _emailSender;
         private readonly IConfirmationCodesRepository _confirmationCodesRepository;
         private readonly ILogger<UserService> _logger;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public UserService(
             IUsersRepository userRepository,
@@ -45,7 +46,8 @@ namespace MenuApp.BLL.Services.UserService
             IPasswordHasher passwordHasher,
             IEmailSender emailSender,
             IConfirmationCodesRepository confirmationCodesRepository,
-            ILogger<UserService> logger
+            ILogger<UserService> logger,
+            IHttpContextAccessor httpContextAccessor
         )
         {
             _userRepository = userRepository;
@@ -54,6 +56,7 @@ namespace MenuApp.BLL.Services.UserService
             _emailSender = emailSender;
             _confirmationCodesRepository = confirmationCodesRepository;
             _logger = logger;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<ServiceResult> RefreshToken(RefreshTokenDTO refreshToken)
@@ -99,14 +102,16 @@ namespace MenuApp.BLL.Services.UserService
         {
             try
             {
-                bool isTokenValid = _jwtTokenGenerator.IsJwtTokenValid(emailVerify.Token);
-                if (!isTokenValid)
+                var userIdClaim = _httpContextAccessor?.HttpContext?.User.Claims.FirstOrDefault(c =>
+                    c.Type == "userId"
+                );
+                if (userIdClaim == null)
                 {
-                    _logger.LogWarning("Token is not valid for email verification");
-                    return new ServiceResult(false, "Token is not valid");
+                    throw new Exception("userId claim is missing in the token");
                 }
 
-                ObjectId userId = _jwtTokenGenerator.GetUserIdFromJwtToken(emailVerify.Token);
+                var userId = _jwtTokenGenerator.GetUserIdFromJwtToken(userIdClaim.Value);
+
                 var code = await _confirmationCodesRepository.GetConfirmationCodeByUserId(userId);
 
                 if (code.CreatedAt < DateTime.UtcNow.AddMinutes(-1))
@@ -233,22 +238,19 @@ namespace MenuApp.BLL.Services.UserService
             }
         }
 
-        public async Task<ServiceResult> LogOut(LogOutDTO logOut)
+        public async Task<ServiceResult> LogOut()
         {
             try
             {
-                bool isTokenValid = _jwtTokenGenerator.IsJwtTokenValid(logOut.Token);
-                if (!isTokenValid)
+                var userIdClaim = _httpContextAccessor?.HttpContext?.User.Claims.FirstOrDefault(c =>
+                    c.Type == "userId"
+                );
+                if (userIdClaim == null)
                 {
-                    _logger.LogWarning(
-                        "Token is not valid for logout: {Token}, userId: {userId}",
-                        logOut.Token,
-                        _jwtTokenGenerator.GetUserIdFromJwtToken(logOut.Token)
-                    );
-                    return new ServiceResult(false, "Token is not valid");
+                    throw new Exception("userId claim is missing in the token");
                 }
 
-                ObjectId userId = _jwtTokenGenerator.GetUserIdFromJwtToken(logOut.Token);
+                var userId = _jwtTokenGenerator.GetUserIdFromJwtToken(userIdClaim.Value);
 
                 await _userRepository.DeleteRefreshTokenByUserId(userId);
 
@@ -268,21 +270,15 @@ namespace MenuApp.BLL.Services.UserService
         {
             try
             {
-                ObjectId userId = _jwtTokenGenerator.GetUserIdFromJwtToken(
-                    updateEmailAndSendCode.Token
+                var userIdClaim = _httpContextAccessor?.HttpContext?.User.Claims.FirstOrDefault(c =>
+                    c.Type == "userId"
                 );
-                bool isTokenValid = _jwtTokenGenerator.IsJwtTokenValid(
-                    updateEmailAndSendCode.Token
-                );
-                if (!isTokenValid)
+                if (userIdClaim == null)
                 {
-                    _logger.LogWarning(
-                        "Token is not valid for update Email: {Token}, userId: {userId}",
-                        updateEmailAndSendCode.Token,
-                        userId
-                    );
-                    return new ServiceResult(false, "Token is not valid");
+                    throw new Exception("userId claim is missing in the token");
                 }
+
+                var userId = _jwtTokenGenerator.GetUserIdFromJwtToken(userIdClaim.Value);
 
                 await _userRepository.UpdateUserEmail(userId, updateEmailAndSendCode.NewEmail);
 
@@ -392,19 +388,15 @@ namespace MenuApp.BLL.Services.UserService
         {
             try
             {
-                ObjectId userId = _jwtTokenGenerator.GetUserIdFromJwtToken(
-                    verifyPasswordRecover.Token
+                var userIdClaim = _httpContextAccessor?.HttpContext?.User.Claims.FirstOrDefault(c =>
+                    c.Type == "userId"
                 );
-                bool isTokenValid = _jwtTokenGenerator.IsJwtTokenValid(verifyPasswordRecover.Token);
-                if (!isTokenValid)
+                if (userIdClaim == null)
                 {
-                    _logger.LogWarning(
-                        "Token is not valid for update: {Token}, userId: {userId}",
-                        verifyPasswordRecover.Token,
-                        userId
-                    );
-                    return new ServiceResult(false, "Token is not valid");
+                    throw new Exception("userId claim is missing in the token");
                 }
+
+                var userId = _jwtTokenGenerator.GetUserIdFromJwtToken(userIdClaim.Value);
 
                 var code = await _confirmationCodesRepository.GetConfirmationCodeByUserId(userId);
 
@@ -469,21 +461,18 @@ namespace MenuApp.BLL.Services.UserService
         {
             try
             {
-                ObjectId userId = _jwtTokenGenerator.GetUserIdFromJwtToken(recoverPassword.Token);
-
-                bool isTokenValid = _jwtTokenGenerator.IsJwtTokenValid(recoverPassword.Token);
-                if (!isTokenValid)
+                var userIdClaim = _httpContextAccessor?.HttpContext?.User.Claims.FirstOrDefault(c =>
+                    c.Type == "userId"
+                );
+                if (userIdClaim == null)
                 {
-                    _logger.LogWarning(
-                        "Token is not valid for set new password: {Token}, userId: {userId}",
-                        recoverPassword.Token,
-                        userId
-                    );
-                    return new ServiceResult(false, "Token is not valid");
+                    throw new Exception("userId claim is missing in the token");
                 }
 
+                var userId = _jwtTokenGenerator.GetUserIdFromJwtToken(userIdClaim.Value);
+
                 if (
-                    (recoverPassword.Password == recoverPassword.RepeatPassword)
+                    recoverPassword.Password == recoverPassword.RepeatPassword
                     || (recoverPassword.Password.Length & recoverPassword.RepeatPassword.Length) > 8
                 )
                 {
@@ -576,7 +565,7 @@ namespace MenuApp.BLL.Services.UserService
                 return new ServiceResult(
                     true,
                     "A confirmation email has been sent to the user",
-                    new { AccessToken = accessToken }
+                    new { AccessToken = accessToken, }
                 );
             }
             catch (Exception ex)
@@ -594,13 +583,15 @@ namespace MenuApp.BLL.Services.UserService
         {
             try
             {
-                ObjectId userId = _jwtTokenGenerator.GetUserIdFromJwtToken(registerUser.Token);
-
-                if (!_jwtTokenGenerator.IsJwtTokenValid(registerUser.Token))
+                var userIdClaim = _httpContextAccessor?.HttpContext?.User.Claims.FirstOrDefault(c =>
+                    c.Type == "userId"
+                );
+                if (userIdClaim == null)
                 {
-                    _logger.LogWarning("Token is not valid for user {userId}", userId);
-                    return new ServiceResult(false, "Token is not valid");
+                    throw new Exception("userId claim is missing in the token");
                 }
+
+                var userId = _jwtTokenGenerator.GetUserIdFromJwtToken(userIdClaim.Value);
 
                 if (registerUser.Password != registerUser.RepeatePassword)
                 {
@@ -649,21 +640,19 @@ namespace MenuApp.BLL.Services.UserService
             }
         }
 
-        public async Task<ServiceResult> ResendConfirmationCode(
-            ResendConfirmationCodeDTO resendConfirmationCode
-        )
+        public async Task<ServiceResult> ResendConfirmationCode()
         {
             try
             {
-                ObjectId userId = _jwtTokenGenerator.GetUserIdFromJwtToken(
-                    resendConfirmationCode.Token
+                var userIdClaim = _httpContextAccessor?.HttpContext?.User.Claims.FirstOrDefault(c =>
+                    c.Type == "userId"
                 );
-
-                if (!_jwtTokenGenerator.IsJwtTokenValid(resendConfirmationCode.Token))
+                if (userIdClaim == null)
                 {
-                    _logger.LogWarning("Token is not valid for user {userId}", userId);
-                    return new ServiceResult(false, "Token is not valid");
+                    throw new Exception("userId claim is missing in the token");
                 }
+
+                var userId = _jwtTokenGenerator.GetUserIdFromJwtToken(userIdClaim.Value);
 
                 var user = await _userRepository.GetUserEmailByUserId(userId);
 

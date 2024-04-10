@@ -11,6 +11,12 @@ namespace MenuApp.API.Extensions.Configuration
         )
         {
             var mongoDBSettings = configuration.GetSection("MongoDBSettings").Get<DBSettings>();
+
+            if (mongoDBSettings == null)
+            {
+                throw new Exception("MongoDB settings are missing or invalid.");
+            }
+
             services.AddSingleton(
                 new DBContext(mongoDBSettings.ConnectionString, mongoDBSettings.DatabaseName)
             );

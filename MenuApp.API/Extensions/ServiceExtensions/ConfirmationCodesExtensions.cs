@@ -1,6 +1,4 @@
-﻿using MenuApp.BLL.Services.UserService;
-using MenuApp.BLL.Utils;
-using MenuApp.DAL.Repositories;
+﻿using MenuApp.DAL.Repositories;
 
 namespace MenuApp.API.Extensions.ServiceExtensions
 {

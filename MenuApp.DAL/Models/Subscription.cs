@@ -7,10 +7,9 @@ using MongoDB.Bson;
 
 namespace MenuApp.DAL.Models
 {
-    public class ConfirmationCodes
+    public class Subscription
     {
         public ObjectId UserId { get; set; }
-        public required string ConfirmationCode { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public List<ObjectId>? Subscribers { get; set; }
     }
 }

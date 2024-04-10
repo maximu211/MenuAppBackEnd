@@ -10,6 +10,6 @@ namespace MenuApp.BLL.DTO.UserDTOs
     public class EmailVerifyDTO
     {
         public required string ConfirmationCode { get; set; }
-        public required string Token { get; set; }
+        public required string Authorization { get; set; }
     }
 }

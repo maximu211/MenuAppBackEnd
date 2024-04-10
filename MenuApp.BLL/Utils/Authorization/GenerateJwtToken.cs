@@ -4,6 +4,9 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using MenuApp.BLL.Configuration;
+using Microsoft.AspNetCore.Authentication.OAuth;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Bson;
@@ -14,40 +17,39 @@ namespace MenuApp.BLL.Utils.Authorization
     {
         string GenerateNewJwtToken(string userId);
         string GenerateRefreshToken(string userId);
-        ClaimsPrincipal GetPrincipalFromExpiredToken(string token);
         ObjectId GetUserIdFromJwtToken(string token);
-        bool IsJwtTokenValid(string token);
     }
 
     public class GenerateJwtToken : IGenerateJwtToken
     {
         private readonly IOptions<JwtSettings> _jwtSettings;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public GenerateJwtToken(IOptions<JwtSettings> jwtSettings)
+        public GenerateJwtToken(
+            IOptions<JwtSettings> jwtSettings,
+            IHttpContextAccessor httpContextAccessor
+        )
         {
             _jwtSettings = jwtSettings;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public string GenerateNewJwtToken(string userId)
         {
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_jwtSettings.Value.JwtKey);
+            Claim[] claims = [new("userId", userId)];
 
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(new Claim[] { new Claim("UserId", userId) }),
-                Expires = DateTime.UtcNow.AddMinutes(1),
-                IssuedAt = DateTime.UtcNow,
-                Audience = _jwtSettings.Value.Audience,
-                Issuer = _jwtSettings.Value.Issuer,
-                SigningCredentials = new SigningCredentials(
-                    new SymmetricSecurityKey(key),
+            var jwt = new JwtSecurityToken(
+                issuer: _jwtSettings.Value.Issuer,
+                audience: _jwtSettings.Value.Audience,
+                claims: claims,
+                expires: DateTime.UtcNow.Add(TimeSpan.FromHours(2)),
+                signingCredentials: new SigningCredentials(
+                    new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Value.JwtKey)),
                     SecurityAlgorithms.HmacSha256
                 )
-            };
+            );
 
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            return tokenHandler.WriteToken(token);
+            return new JwtSecurityTokenHandler().WriteToken(jwt);
         }
 
         public string GenerateRefreshToken(string userId)
@@ -62,129 +64,20 @@ namespace MenuApp.BLL.Utils.Authorization
             }
         }
 
-        public ClaimsPrincipal GetPrincipalFromExpiredToken(string token)
+        public ObjectId GetUserIdFromJwtToken(string claim)
         {
-            var tokenValidationParameters = new TokenValidationParameters
+            if (string.IsNullOrEmpty(claim))
             {
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(
-                    Encoding.ASCII.GetBytes(_jwtSettings.Value.JwtKey)
-                ),
-                ValidateIssuer = true,
-                ValidIssuer = _jwtSettings.Value.Issuer,
-                ValidateAudience = true,
-                ValidAudience = _jwtSettings.Value.Audience,
-                ValidateLifetime = false
-            };
-
-            var tokenHandler = new JwtSecurityTokenHandler();
-            try
-            {
-                var principal = tokenHandler.ValidateToken(
-                    token,
-                    tokenValidationParameters,
-                    out var securityToken
-                );
-                if (!IsJwtWithValidSecurityAlgorithm(securityToken))
-                {
-                    return new ClaimsPrincipal();
-                }
-                return principal;
-            }
-            catch
-            {
-                return new ClaimsPrincipal();
-            }
-        }
-
-        private bool IsJwtWithValidSecurityAlgorithm(SecurityToken securityToken)
-        {
-            return securityToken is JwtSecurityToken jwtSecurityToken
-                && jwtSecurityToken.Header.Alg.Equals(
-                    SecurityAlgorithms.HmacSha256,
-                    StringComparison.InvariantCultureIgnoreCase
-                );
-        }
-
-        public ObjectId GetUserIdFromJwtToken(string token)
-        {
-            string[] tokenParts = token.Split('.');
-
-            if (tokenParts.Length != 3)
-            {
-                throw new Exception("Invalid JWT token format.");
+                return ObjectId.Empty;
             }
 
-            string encodedPayload = tokenParts[1];
-            string decodedPayload = Encoding.UTF8.GetString(
-                Base64UrlEncoder.DecodeBytes(encodedPayload)
-            );
-
-            JwtPayload payload = Newtonsoft.Json.JsonConvert.DeserializeObject<JwtPayload>(
-                decodedPayload
-            );
-
-            if (payload.TryGetValue("UserId", out var userIdClaim) && userIdClaim != null)
+            if (ObjectId.TryParse(claim, out ObjectId userId))
             {
-                if (
-                    userIdClaim is string userIdString
-                    && ObjectId.TryParse(userIdString, out ObjectId userId)
-                )
-                {
-                    return userId;
-                }
-                else
-                {
-                    throw new Exception("User id claim in JWT token is not in the correct format.");
-                }
+                return userId;
             }
-
-            throw new Exception("User id claim not found in JWT token.");
-        }
-
-        public bool IsJwtTokenValid(string token)
-        {
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var tokenValidationParameters = new TokenValidationParameters
+            else
             {
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(
-                    Encoding.ASCII.GetBytes(_jwtSettings.Value.JwtKey)
-                ),
-                ValidateIssuer = true,
-                ValidIssuer = _jwtSettings.Value.Issuer,
-                ValidateAudience = true,
-                ValidAudience = _jwtSettings.Value.Audience,
-                ValidateLifetime = true
-            };
-
-            try
-            {
-                SecurityToken validatedToken;
-                var principal = tokenHandler.ValidateToken(
-                    token,
-                    tokenValidationParameters,
-                    out validatedToken
-                );
-
-                if (
-                    validatedToken is JwtSecurityToken jwtSecurityToken
-                    && jwtSecurityToken.ValidTo > DateTime.UtcNow
-                    && // Додана перевірка часу дії токену
-                    jwtSecurityToken.Header.Alg.Equals(
-                        SecurityAlgorithms.HmacSha256,
-                        StringComparison.InvariantCultureIgnoreCase
-                    )
-                )
-                {
-                    return true;
-                }
-
-                return false;
-            }
-            catch (Exception)
-            {
-                return false;
+                throw new ArgumentException("Invalid userId claim value");
             }
         }
     }

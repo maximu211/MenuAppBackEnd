@@ -1,5 +1,8 @@
-﻿using MenuApp.BLL.DTO.UserDTOs;
+﻿using System.Security.Claims;
+using MenuApp.BLL.DTO.UserDTOs;
 using MenuApp.BLL.Services.UserService;
+using MenuApp.BLL.Utils.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MenuApp.API.Controllers
@@ -9,10 +12,12 @@ namespace MenuApp.API.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
+        private readonly IGenerateJwtToken _jwt;
 
-        public UserController(IUserService userService)
+        public UserController(IUserService userService, IGenerateJwtToken jwt)
         {
             _userService = userService;
+            _jwt = jwt;
         }
 
         [HttpPost("register_user")]
@@ -37,6 +42,7 @@ namespace MenuApp.API.Controllers
                 return BadRequest(result.Message);
         }
 
+        [Authorize]
         [HttpPost("refresh_token")]
         public async Task<IActionResult> RefreshToken(RefreshTokenDTO refreshToken)
         {
@@ -47,6 +53,8 @@ namespace MenuApp.API.Controllers
                 return BadRequest(result.Message);
         }
 
+        [AllowAnonymous]
+        [Authorize]
         [HttpPost("verify_email")]
         public async Task<IActionResult> VerifyEmail(EmailVerifyDTO emailVerify)
         {
@@ -67,16 +75,18 @@ namespace MenuApp.API.Controllers
                 return BadRequest(result.Message);
         }
 
+        [Authorize]
         [HttpPost("log_out")]
-        public async Task<IActionResult> LogOut(LogOutDTO logOut)
+        public async Task<IActionResult> LogOut()
         {
-            var result = await _userService.LogOut(logOut);
+            var result = await _userService.LogOut();
             if (result.Success)
                 return Ok(result);
             else
                 return BadRequest(result.Message);
         }
 
+        [Authorize]
         [HttpPost("send_verification_code_to_recover_password")]
         public async Task<IActionResult> SendVerificationCodeToRecoverPassword(
             SendVerificatonCodeToRecoverPasswordDTO sendVerificatonCodeToRecoverPassword
@@ -91,6 +101,7 @@ namespace MenuApp.API.Controllers
                 return BadRequest(result.Message);
         }
 
+        [Authorize]
         [HttpPost("verify_password_recover")]
         public async Task<IActionResult> VerifyPasswordRecover(
             VerifyPasswordRecoverDTO verifyPasswordRecover
@@ -103,6 +114,7 @@ namespace MenuApp.API.Controllers
                 return BadRequest(result.Message);
         }
 
+        [Authorize]
         [HttpPost("set_new_password")]
         public async Task<IActionResult> SetNewPassword(RecoverPasswordDTO recoverPassword)
         {
@@ -113,6 +125,7 @@ namespace MenuApp.API.Controllers
                 return BadRequest(result.Message);
         }
 
+        [Authorize]
         [HttpPost("resend_email_confirmation")]
         public async Task<IActionResult> UpdateEmailAndSendCode(
             UpdateEmailAndSendCodeDTO updateEmailAndSendCode
@@ -125,12 +138,11 @@ namespace MenuApp.API.Controllers
                 return BadRequest(result.Message);
         }
 
+        [Authorize]
         [HttpPost("resend_confirmation_code")]
-        public async Task<IActionResult> ResendConfirmationCode(
-            ResendConfirmationCodeDTO resendEmailConfirmation
-        )
+        public async Task<IActionResult> ResendConfirmationCode()
         {
-            var result = await _userService.ResendConfirmationCode(resendEmailConfirmation);
+            var result = await _userService.ResendConfirmationCode();
             if (result.Success)
                 return Ok(result);
             else
