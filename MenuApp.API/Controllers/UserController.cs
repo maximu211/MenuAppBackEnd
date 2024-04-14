@@ -12,12 +12,10 @@ namespace MenuApp.API.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
-        private readonly IGenerateJwtToken _jwt;
 
         public UserController(IUserService userService, IGenerateJwtToken jwt)
         {
             _userService = userService;
-            _jwt = jwt;
         }
 
         [HttpPost("register_user")]

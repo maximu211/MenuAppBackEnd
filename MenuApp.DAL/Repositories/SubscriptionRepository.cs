@@ -1,22 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using MenuApp.DAL.DataBaseContext;
+﻿using MenuApp.DAL.DataBaseContext;
 using MenuApp.DAL.Models;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using MongoDB.Driver.Linq;
 
 namespace MenuApp.DAL.Repositories
 {
-    interface ISubscriptionRepository
+    public interface ISubscriptionRepository
     {
-        public void SubscribeTo(ObjectId user, ObjectId subscribeTo);
-        public void UnsubscribeFrom(ObjectId user, ObjectId unsubscribeFrom);
+        Task SubscribeTo(ObjectId user, ObjectId subscribeTo);
+        Task UnsubscribeFrom(ObjectId user, ObjectId unsubscribeFrom);
+        Task<IEnumerable<ObjectId>> GetSubscribers(ObjectId userId);
+        Task<IEnumerable<ObjectId>> GetSubscribedUsers(ObjectId userId);
     }
 
-    public class SubscriptionRepository
+    public class SubscriptionRepository : ISubscriptionRepository
     {
         private readonly IMongoCollection<Subscription> _collection;
 
@@ -25,20 +23,52 @@ namespace MenuApp.DAL.Repositories
             _collection = context.GetCollection<Subscription>();
         }
 
-        public void Subscribe(ObjectId user, ObjectId subscribeTo)
+        public async Task SubscribeTo(ObjectId user, ObjectId subscribeTo)
         {
-            var filter = Builders<Subscription>.Filter.Eq(s => s.UserId, user);
-            var update = Builders<Subscription>.Update.AddToSet(s => s.Subscribers, subscribeTo);
+            var existingSubscription = await _collection
+                .Find(s => s.UserId == user)
+                .FirstOrDefaultAsync();
 
-            _collection.UpdateOne(filter, update);
+            if (existingSubscription == null)
+            {
+                List<ObjectId> subscribers = new List<ObjectId>();
+                subscribers.Append(subscribeTo);
+                existingSubscription = new Subscription
+                {
+                    UserId = user,
+                    Subscribers = subscribers
+                };
+
+                await _collection.InsertOneAsync(existingSubscription);
+            }
+
+            existingSubscription.Subscribers.Add(subscribeTo);
         }
 
-        public void Unsubscribe(ObjectId user, ObjectId unsubscribeFrom)
+        public async Task UnsubscribeFrom(ObjectId user, ObjectId unsubscribeFrom)
         {
             var filter = Builders<Subscription>.Filter.Eq(s => s.UserId, user);
             var update = Builders<Subscription>.Update.Pull(s => s.Subscribers, unsubscribeFrom);
 
-            _collection.UpdateOne(filter, update);
+            await _collection.UpdateOneAsync(filter, update);
+        }
+
+        public async Task<IEnumerable<ObjectId>> GetSubscribers(ObjectId userId)
+        {
+            var document = await _collection.Find(s => s.UserId == userId).FirstOrDefaultAsync();
+
+            return document.Subscribers ?? Enumerable.Empty<ObjectId>();
+        }
+
+        public async Task<IEnumerable<ObjectId>> GetSubscribedUsers(ObjectId userId)
+        {
+            var subscribedUsers = await _collection
+                .AsQueryable()
+                .Where(s => s.Subscribers.Contains(userId))
+                .Select(s => s.UserId)
+                .ToListAsync();
+
+            return subscribedUsers;
         }
     }
 }

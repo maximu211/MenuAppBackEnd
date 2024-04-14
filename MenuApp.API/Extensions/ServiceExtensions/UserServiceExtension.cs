@@ -5,7 +5,7 @@ using MenuApp.DAL.Repositories;
 
 namespace MenuApp.API.Extensions.ServiceExtensions
 {
-    public static class UserServiceExtensions
+    public static class UserServiceExtension
     {
         public static IServiceCollection AddUserService(this IServiceCollection services)
         {
