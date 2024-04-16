@@ -24,6 +24,8 @@ namespace MenuApp.DAL.Repositories
         Task SetRefreshTokenById(ObjectId userId, string refreshToken);
         Task DeleteNonConfirmedEmails();
         Task<Users> GetUserEmailByUserId(ObjectId userId);
+        Task SetUserImage(ObjectId userId, string image);
+        Task<string> GetUserImageByUserId(ObjectId userId);
     }
 
     public class UserRepository : IUsersRepository
@@ -125,7 +127,6 @@ namespace MenuApp.DAL.Repositories
         public async Task SetRefreshTokenById(ObjectId userId, string refreshToken)
         {
             var filter = Builders<Users>.Filter.Eq(u => u.Id, userId);
-
             var update = Builders<Users>.Update.Set(u => u.RefreshToken, refreshToken);
 
             await _collection.UpdateOneAsync(filter, update);
@@ -143,6 +144,22 @@ namespace MenuApp.DAL.Repositories
         public async Task<Users> GetUserEmailByUserId(ObjectId userId)
         {
             return await _collection.Find(e => e.Id == userId).FirstOrDefaultAsync();
+        }
+
+        public async Task SetUserImage(ObjectId userId, string image)
+        {
+            var filter = Builders<Users>.Filter.Where(x => x.Id == userId);
+            var update = Builders<Users>.Update.Set(x => x.Image, image);
+
+            await _collection.UpdateOneAsync(filter, update);
+        }
+
+        public async Task<string> GetUserImageByUserId(ObjectId userId)
+        {
+            var filter = Builders<Users>.Filter.Where((x) => x.Id == userId);
+            var user = await _collection.Find(filter).FirstOrDefaultAsync();
+
+            return user.Image ?? string.Empty;
         }
     }
 }

@@ -29,9 +29,16 @@ namespace MenuApp.DAL.Repositories
         public async Task UpsertConfirmationCode(ConfirmationCodes code)
         {
             var filter = Builders<ConfirmationCodes>.Filter.Eq(x => x.UserId, code.UserId);
-            var options = new ReplaceOptions { IsUpsert = true };
+            var existingCode = await _collection.Find(filter).FirstOrDefaultAsync();
 
-            await _collection.ReplaceOneAsync(filter, code, options);
+            if (existingCode == null)
+            {
+                await _collection.InsertOneAsync(code);
+            }
+            else
+            {
+                await _collection.ReplaceOneAsync(filter, code);
+            }
         }
 
         public async Task<ConfirmationCodes> GetConfirmationCodeByUserId(ObjectId userId)

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MenuApp.BLL.DTO.SubscriptionDTOs;
 using MenuApp.BLL.Services.MenuApp.BLL.Services;
 using MenuApp.BLL.Utils.Authorization;
 using MenuApp.DAL.Models;
@@ -15,8 +16,8 @@ namespace MenuApp.BLL.Services.SubscriptionService
 {
     public interface ISubscriptionService
     {
-        Task<ServiceResult> SubscribeTo(ObjectId subscribeTo);
-        Task<ServiceResult> UnsubscribeFrom(ObjectId unsubscribeFrom);
+        Task<ServiceResult> SubscribeTo(SubscriptionDTO subscribeTo);
+        Task<ServiceResult> UnsubscribeFrom(SubscriptionDTO unsubscribeFrom);
         Task<ServiceResult> GetSubscribers();
         Task<ServiceResult> GetSubscribedUsers();
     }
@@ -104,7 +105,7 @@ namespace MenuApp.BLL.Services.SubscriptionService
             }
         }
 
-        public async Task<ServiceResult> SubscribeTo(ObjectId subscribeTo)
+        public async Task<ServiceResult> SubscribeTo(SubscriptionDTO subscribeTo)
         {
             try
             {
@@ -118,7 +119,7 @@ namespace MenuApp.BLL.Services.SubscriptionService
 
                 ObjectId userId = _jwtGenerator.GetUserIdFromJwtToken(userIdClaim.Value);
 
-                await _subscriptionRepository.SubscribeTo(userId, subscribeTo);
+                await _subscriptionRepository.SubscribeTo(userId, ObjectId.Parse(subscribeTo.Id));
 
                 _logger.LogInformation(
                     $"User {userId} successfuly subscribed to user {subscribeTo}"
@@ -132,7 +133,7 @@ namespace MenuApp.BLL.Services.SubscriptionService
             }
         }
 
-        public async Task<ServiceResult> UnsubscribeFrom(ObjectId unsubscribeFrom)
+        public async Task<ServiceResult> UnsubscribeFrom(SubscriptionDTO unsubscribeFrom)
         {
             try
             {
@@ -146,7 +147,10 @@ namespace MenuApp.BLL.Services.SubscriptionService
 
                 ObjectId userId = _jwtGenerator.GetUserIdFromJwtToken(userIdClaim.Value);
 
-                await _subscriptionRepository.UnsubscribeFrom(userId, unsubscribeFrom);
+                await _subscriptionRepository.UnsubscribeFrom(
+                    userId,
+                    ObjectId.Parse(unsubscribeFrom.Id)
+                );
 
                 _logger.LogInformation(
                     $"User {userId} successfuly unsubscribed from user {unsubscribeFrom}"

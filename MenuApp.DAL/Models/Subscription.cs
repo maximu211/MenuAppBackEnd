@@ -9,12 +9,8 @@ namespace MenuApp.DAL.Models
 {
     public class Subscription
     {
+        public ObjectId Id { get; set; }
         public ObjectId UserId { get; set; }
-        public List<ObjectId> Subscribers { get; set; }
-
-        public Subscription()
-        {
-            Subscribers = new List<ObjectId>();
-        }
+        public List<ObjectId>? Subscribers { get; set; }
     }
 }

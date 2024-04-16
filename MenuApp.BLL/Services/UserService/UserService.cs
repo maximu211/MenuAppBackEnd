@@ -1,5 +1,4 @@
-﻿using System.IdentityModel.Tokens.Jwt;
-using MenuApp.BLL.DTO.UserDTOs;
+﻿using MenuApp.BLL.DTO.UserDTOs;
 using MenuApp.BLL.Services.MenuApp.BLL.Services;
 using MenuApp.BLL.Utils.Authorization;
 using MenuApp.BLL.Utils.Email;
@@ -7,7 +6,6 @@ using MenuApp.DAL.Models;
 using MenuApp.DAL.Repositories;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using MongoDB.Bson;
 
 namespace MenuApp.BLL.Services.UserService
 {
@@ -28,6 +26,8 @@ namespace MenuApp.BLL.Services.UserService
         Task<ServiceResult> SetNewPassword(RecoverPasswordDTO recoverPassword);
         Task<ServiceResult> RegisterNewEmail(RegisterNewEmailDTO newEmail);
         Task<ServiceResult> ResendConfirmationCode();
+        Task<ServiceResult> SetUserImage(string image);
+        Task<ServiceResult> GetUserImage();
     }
 
     public class UserService : IUserService
@@ -522,6 +522,7 @@ namespace MenuApp.BLL.Services.UserService
                     Password = string.Empty,
                     Email = registerNewEmail.Email,
                     Username = string.Empty,
+                    Image = null
                 };
 
                 await _userRepository.AddUser(newUser);
@@ -687,6 +688,58 @@ namespace MenuApp.BLL.Services.UserService
                     false,
                     "An unexpected error occurred while processing your request"
                 );
+            }
+        }
+
+        public async Task<ServiceResult> SetUserImage(string image)
+        {
+            try
+            {
+                var userIdClaim = _httpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(c =>
+                    c.Type == "userId"
+                );
+                if (userIdClaim == null)
+                {
+                    throw new Exception("userId claim is missing in the token");
+                }
+
+                var userId = _jwtTokenGenerator.GetUserIdFromJwtToken(userIdClaim.Value);
+
+                await _userRepository.SetUserImage(userId, image);
+
+                _logger.LogInformation($"user {userId} succesfuly set profile photo");
+                return new ServiceResult(true, $"Profile photo successfuly setted");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error while setting profile photo: {ex}");
+                return new ServiceResult(false, "Error in setting photo");
+            }
+        }
+
+        public async Task<ServiceResult> GetUserImage()
+        {
+            try
+            {
+                var userIdClaim = _httpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(c =>
+                    c.Type == "userId"
+                );
+                if (userIdClaim == null)
+                {
+                    throw new Exception("userId claim is missing in the token");
+                }
+
+                var userId = _jwtTokenGenerator.GetUserIdFromJwtToken(userIdClaim.Value);
+
+                string photo = await _userRepository.GetUserImageByUserId(userId);
+
+                _logger.LogInformation($"user {userId} succesfuly get profile photo");
+                return new ServiceResult(true, $"Profile photo successfuly setted", photo);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error while getting profile photo: {ex}");
+                return new ServiceResult(false, "Error in getting photo");
             }
         }
     }

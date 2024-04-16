@@ -1,4 +1,5 @@
-﻿using MenuApp.BLL.Services.SubscriptionService;
+﻿using MenuApp.BLL.DTO.SubscriptionDTOs;
+using MenuApp.BLL.Services.SubscriptionService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -18,8 +19,8 @@ namespace MenuApp.API.Controllers
             _subscriptionService = subscriptionService;
         }
 
-        [HttpPost]
-        public async Task<IActionResult> SubscribeTo(ObjectId subscribeTo)
+        [HttpPost("subscribe_to")]
+        public async Task<IActionResult> SubscribeTo(SubscriptionDTO subscribeTo)
         {
             var result = await _subscriptionService.SubscribeTo(subscribeTo);
             if (result.Success)
@@ -28,8 +29,8 @@ namespace MenuApp.API.Controllers
                 return BadRequest(result.Message);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> UnsubscribeFrom(ObjectId unsubscribeFrom)
+        [HttpPost("unsubscribe_from")]
+        public async Task<IActionResult> UnsubscribeFrom(SubscriptionDTO unsubscribeFrom)
         {
             var result = await _subscriptionService.UnsubscribeFrom(unsubscribeFrom);
             if (result.Success)
@@ -38,7 +39,7 @@ namespace MenuApp.API.Controllers
                 return BadRequest(result.Message);
         }
 
-        [HttpGet]
+        [HttpGet("get_subscribers")]
         public async Task<IActionResult> GetSubscribers()
         {
             var result = await _subscriptionService.GetSubscribers();
@@ -48,7 +49,7 @@ namespace MenuApp.API.Controllers
                 return BadRequest(result.Message);
         }
 
-        [HttpGet]
+        [HttpGet("get_subscribed_users")]
         public async Task<IActionResult> GetSubscribedUsers()
         {
             var result = await _subscriptionService.GetSubscribedUsers();

@@ -1,11 +1,8 @@
 using System.Text;
 using MenuApp.API.Extensions.Configuration;
 using MenuApp.API.Extensions.ServiceExtensions;
-using MenuApp.BLL.Configuration;
 using MenuApp.BLL.Workers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authentication.OAuth;
-using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;

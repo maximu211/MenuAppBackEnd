@@ -146,5 +146,27 @@ namespace MenuApp.API.Controllers
             else
                 return BadRequest(result.Message);
         }
+
+        [Authorize]
+        [HttpPost("set_user_image")]
+        public async Task<IActionResult> SetUserImage(string image)
+        {
+            var result = await _userService.SetUserImage(image);
+            if (result.Success)
+                return Ok(result);
+            else
+                return BadRequest(result.Message);
+        }
+
+        [Authorize]
+        [HttpGet("get_user_image")]
+        public async Task<IActionResult> GetUserImage()
+        {
+            var result = await _userService.GetUserImage();
+            if (result.Success)
+                return Ok(result);
+            else
+                return BadRequest(result.Message);
+        }
     }
 }

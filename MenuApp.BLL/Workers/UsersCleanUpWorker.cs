@@ -6,7 +6,7 @@ namespace MenuApp.BLL.Workers
 {
     public class UsersCleanUpWorker : BackgroundService
     {
-        private readonly TimeSpan _cleanInterval = TimeSpan.FromMinutes(1);
+        private readonly TimeSpan _cleanInterval = TimeSpan.FromHours(1);
         private readonly IServiceProvider _serviceProvider;
 
         public UsersCleanUpWorker(IServiceProvider serviceProvider)
