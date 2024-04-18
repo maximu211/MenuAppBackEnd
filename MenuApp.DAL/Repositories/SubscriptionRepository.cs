@@ -1,5 +1,6 @@
 ﻿using MenuApp.DAL.DataBaseContext;
-using MenuApp.DAL.Models;
+using MenuApp.DAL.Models.AggregetionModels;
+using MenuApp.DAL.Models.EntityModels;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
@@ -64,7 +65,7 @@ namespace MenuApp.DAL.Repositories
         {
             var subscription = await _subscriptionsCollection
                 .Aggregate()
-                .Lookup<Subscriptions, Users, SubsWithUsers>(
+                .Lookup<Subscriptions, Users, SubscriptionAggregetionModel>(
                     foreignCollection: _usersCollection,
                     localField: sub => sub.Subscribers,
                     foreignField: u => u.Id,
@@ -80,7 +81,7 @@ namespace MenuApp.DAL.Repositories
         {
             var result = await _subscriptionsCollection
                 .Aggregate()
-                .Lookup<Subscriptions, Users, SubsWithUsers>(
+                .Lookup<Subscriptions, Users, SubscriptionAggregetionModel>(
                     foreignCollection: _usersCollection,
                     localField: sub => sub.UserId,
                     foreignField: u => u.Id,
@@ -91,12 +92,7 @@ namespace MenuApp.DAL.Repositories
 
             var subscribedUsers = result.SelectMany(s => s.SubscribedUsers).ToList();
 
-            return subscribedUsers;
+            return subscribedUsers ?? new List<Users>();
         }
-    }
-
-    public class SubsWithUsers : Subscriptions
-    {
-        public List<Users> SubscribedUsers { get; set; }
     }
 }

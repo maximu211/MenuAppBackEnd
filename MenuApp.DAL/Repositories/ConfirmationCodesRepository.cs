@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using MenuApp.DAL.DataBaseContext;
-using MenuApp.DAL.Models;
+using MenuApp.DAL.Models.EntityModels;
 using MongoDB.Bson;
 using MongoDB.Driver;
 

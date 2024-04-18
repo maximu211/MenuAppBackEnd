@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AutoMapper;
 using MenuApp.BLL.DTO.UserDTO;
-using MenuApp.DAL.Models;
+using MenuApp.DAL.Models.EntityModels;
 
 namespace MenuApp.BLL.Mappers
 {

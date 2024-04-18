@@ -2,7 +2,7 @@
 using MenuApp.BLL.Services.MenuApp.BLL.Services;
 using MenuApp.BLL.Utils.Authorization;
 using MenuApp.BLL.Utils.Email;
-using MenuApp.DAL.Models;
+using MenuApp.DAL.Models.EntityModels;
 using MenuApp.DAL.Repositories;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;

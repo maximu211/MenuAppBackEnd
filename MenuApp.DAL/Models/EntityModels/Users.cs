@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
-namespace MenuApp.DAL.Models
+namespace MenuApp.DAL.Models.EntityModels
 {
     public class Users
     {
