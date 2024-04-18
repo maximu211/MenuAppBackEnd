@@ -7,10 +7,10 @@ using MongoDB.Bson;
 
 namespace MenuApp.DAL.Models
 {
-    public class Subscription
+    public class Subscriptions
     {
         public ObjectId Id { get; set; }
         public ObjectId UserId { get; set; }
-        public List<ObjectId>? Subscribers { get; set; }
+        public List<ObjectId> Subscribers { get; set; } = new List<ObjectId>();
     }
 }

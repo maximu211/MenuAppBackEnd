@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AutoMapper;
 using MenuApp.BLL.DTO.SubscriptionDTOs;
+using MenuApp.BLL.DTO.UserDTO;
 using MenuApp.BLL.Services.MenuApp.BLL.Services;
 using MenuApp.BLL.Utils.Authorization;
 using MenuApp.DAL.Models;
@@ -28,12 +30,14 @@ namespace MenuApp.BLL.Services.SubscriptionService
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ISubscriptionRepository _subscriptionRepository;
         private readonly IGenerateJwtToken _jwtGenerator;
+        private readonly IMapper _mapper;
 
         public SubscriptionService(
             ILogger<SubscriptionService> logger,
             IHttpContextAccessor httpContextAccessor,
             ISubscriptionRepository subscriptionRepository,
-            IGenerateJwtToken generateJwtToken
+            IGenerateJwtToken generateJwtToken,
+            IMapper mapper
         )
         {
             _logger = logger;
@@ -41,6 +45,7 @@ namespace MenuApp.BLL.Services.SubscriptionService
                 httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
             _subscriptionRepository = subscriptionRepository;
             _jwtGenerator = generateJwtToken;
+            _mapper = mapper;
         }
 
         public async Task<ServiceResult> GetSubscribedUsers()
@@ -57,14 +62,21 @@ namespace MenuApp.BLL.Services.SubscriptionService
 
                 ObjectId userId = _jwtGenerator.GetUserIdFromJwtToken(userIdClaim.Value);
 
-                var subscribedUsers = await _subscriptionRepository.GetSubscribedUsers(userId);
-                int subscribedUsersCount = subscribedUsers.Count();
+                List<UsersDTO> subscribedUsersList = (
+                    await _subscriptionRepository.GetSubscribedUsers(userId)
+                )
+                    .Select(user => _mapper.Map<UsersDTO>(user))
+                    .ToList();
 
                 _logger.LogInformation($"User {userId} successfuly get subscriberd users list");
                 return new ServiceResult(
                     true,
                     "List succesfully sended",
-                    new { SubscribedUsers = subscribedUsers, Count = subscribedUsersCount }
+                    new
+                    {
+                        SubscribedUsers = subscribedUsersList,
+                        Count = subscribedUsersList.Count()
+                    }
                 );
             }
             catch (Exception ex)
@@ -88,14 +100,15 @@ namespace MenuApp.BLL.Services.SubscriptionService
 
                 ObjectId userId = _jwtGenerator.GetUserIdFromJwtToken(userIdClaim.Value);
 
-                var subscribers = await _subscriptionRepository.GetSubscribers(userId);
-                int subscribersCount = subscribers.Count();
+                List<UsersDTO> subscribersDTOList = _mapper.Map<List<UsersDTO>>(
+                    await _subscriptionRepository.GetSubscribers(userId)
+                );
 
                 _logger.LogInformation($"User {userId} successfuly get subscribers list");
                 return new ServiceResult(
                     true,
                     "List succesfully sended",
-                    new { Subscribers = subscribers, Count = subscribersCount }
+                    new { Subscribers = subscribersDTOList, Count = subscribersDTOList.Count() }
                 );
             }
             catch (Exception ex)

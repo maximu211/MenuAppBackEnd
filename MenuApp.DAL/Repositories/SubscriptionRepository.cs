@@ -10,71 +10,93 @@ namespace MenuApp.DAL.Repositories
     {
         Task SubscribeTo(ObjectId user, ObjectId subscribeTo);
         Task UnsubscribeFrom(ObjectId user, ObjectId unsubscribeFrom);
-        Task<List<string>> GetSubscribers(ObjectId userId);
-        Task<List<string>> GetSubscribedUsers(ObjectId userId);
+        Task<List<Users>> GetSubscribers(ObjectId userId);
+        Task<List<Users>> GetSubscribedUsers(ObjectId userId);
     }
 
     public class SubscriptionRepository : ISubscriptionRepository
     {
-        private readonly IMongoCollection<Subscription> _collection;
+        private readonly IMongoCollection<Subscriptions> _subscriptionsCollection;
+        private readonly IMongoCollection<Users> _usersCollection;
 
         public SubscriptionRepository(DBContext context)
         {
-            _collection = context.GetCollection<Subscription>();
+            _subscriptionsCollection = context.GetCollection<Subscriptions>();
+            _usersCollection = context.GetCollection<Users>();
         }
 
         public async Task SubscribeTo(ObjectId user, ObjectId subscribeTo)
         {
-            var existingSubscription = await _collection
+            var existingSubscription = await _subscriptionsCollection
                 .Find(s => s.UserId == user)
                 .FirstOrDefaultAsync();
 
             if (existingSubscription == null)
             {
-                existingSubscription = new Subscription
+                existingSubscription = new Subscriptions
                 {
                     UserId = user,
                     Subscribers = new List<ObjectId>()
                 };
 
-                await _collection.InsertOneAsync(existingSubscription);
+                await _subscriptionsCollection.InsertOneAsync(existingSubscription);
             }
 
-            existingSubscription.Subscribers?.Add(subscribeTo);
+            existingSubscription.Subscribers.Add(subscribeTo);
 
-            var filter = Builders<Subscription>.Filter.Eq(s => s.Id, existingSubscription.Id);
-            var update = Builders<Subscription>.Update.Set(
+            var filter = Builders<Subscriptions>.Filter.Eq(s => s.Id, existingSubscription.Id);
+            var update = Builders<Subscriptions>.Update.Set(
                 s => s.Subscribers,
                 existingSubscription.Subscribers
             );
-            await _collection.UpdateOneAsync(filter, update);
+            await _subscriptionsCollection.UpdateOneAsync(filter, update);
         }
 
         public async Task UnsubscribeFrom(ObjectId user, ObjectId unsubscribeFrom)
         {
-            var filter = Builders<Subscription>.Filter.Eq(s => s.UserId, user);
-            var update = Builders<Subscription>.Update.Pull(s => s.Subscribers, unsubscribeFrom);
+            var filter = Builders<Subscriptions>.Filter.Eq(s => s.UserId, user);
+            var update = Builders<Subscriptions>.Update.Pull(s => s.Subscribers, unsubscribeFrom);
 
-            await _collection.UpdateOneAsync(filter, update);
+            await _subscriptionsCollection.UpdateOneAsync(filter, update);
         }
 
-        public async Task<List<string>> GetSubscribers(ObjectId userId)
+        public async Task<List<Users>> GetSubscribers(ObjectId userId)
         {
-            var document = await _collection.Find(s => s.UserId == userId).FirstOrDefaultAsync();
+            var subscription = await _subscriptionsCollection
+                .Aggregate()
+                .Lookup<Subscriptions, Users, SubsWithUsers>(
+                    foreignCollection: _usersCollection,
+                    localField: sub => sub.Subscribers,
+                    foreignField: u => u.Id,
+                    @as: swu => swu.SubscribedUsers
+                )
+                .Match(s => s.UserId == userId)
+                .FirstOrDefaultAsync();
 
-            return document?.Subscribers?.Select(id => id.ToString()).ToList()
-                ?? new List<string>();
+            return subscription?.SubscribedUsers ?? new List<Users>();
         }
 
-        public async Task<List<string>> GetSubscribedUsers(ObjectId userId)
+        public async Task<List<Users>> GetSubscribedUsers(ObjectId userId)
         {
-            var subscribedUsers = await _collection
-                .AsQueryable()
-                .Where(s => s.Subscribers.Contains(userId))
-                .Select(s => s.UserId.ToString())
+            var result = await _subscriptionsCollection
+                .Aggregate()
+                .Lookup<Subscriptions, Users, SubsWithUsers>(
+                    foreignCollection: _usersCollection,
+                    localField: sub => sub.UserId,
+                    foreignField: u => u.Id,
+                    @as: swu => swu.SubscribedUsers
+                )
+                .Match(s => s.Subscribers.Contains(userId))
                 .ToListAsync();
+
+            var subscribedUsers = result.SelectMany(s => s.SubscribedUsers).ToList();
 
             return subscribedUsers;
         }
+    }
+
+    public class SubsWithUsers : Subscriptions
+    {
+        public List<Users> SubscribedUsers { get; set; }
     }
 }

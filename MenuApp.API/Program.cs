@@ -1,8 +1,10 @@
 using System.Text;
 using MenuApp.API.Extensions.Configuration;
 using MenuApp.API.Extensions.ServiceExtensions;
+using MenuApp.BLL.Mappers;
 using MenuApp.BLL.Workers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
@@ -40,6 +42,7 @@ builder.Logging.AddSerilog(loger);
 
 builder.Services.AddControllers();
 
+builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
 builder.Services.ConfigureProjectSettings(configuration);
 builder.Services.AddMongoDBConfiguration(configuration);
 
