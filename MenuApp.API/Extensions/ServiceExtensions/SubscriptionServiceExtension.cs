@@ -11,7 +11,7 @@ namespace MenuApp.API.Extensions.ServiceExtensions
         public static IServiceCollection AddSubscriptionService(this IServiceCollection services)
         {
             services.AddScoped<ISubscriptionService, SubscriptionService>();
-            services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
+            services.AddScoped<ISubscriptionsRepository, SubscriptionRepository>();
 
             return services;
         }

@@ -7,7 +7,7 @@ using MongoDB.Driver.Linq;
 
 namespace MenuApp.DAL.Repositories
 {
-    public interface ISubscriptionRepository
+    public interface ISubscriptionsRepository
     {
         Task SubscribeTo(ObjectId user, ObjectId subscribeTo);
         Task UnsubscribeFrom(ObjectId user, ObjectId unsubscribeFrom);
@@ -15,7 +15,7 @@ namespace MenuApp.DAL.Repositories
         Task<List<Users>> GetSubscribedUsers(ObjectId userId);
     }
 
-    public class SubscriptionRepository : ISubscriptionRepository
+    public class SubscriptionRepository : ISubscriptionsRepository
     {
         private readonly IMongoCollection<Subscriptions> _subscriptionsCollection;
         private readonly IMongoCollection<Users> _usersCollection;

@@ -51,6 +51,7 @@ builder.Services.AddHostedService<UsersCleanUpWorker>();
 builder.Services.AddUserService();
 builder.Services.AddConfirmationCodesService();
 builder.Services.AddSubscriptionService();
+builder.Services.AddReceiptService();
 
 builder.Services.AddHttpContextAccessor();
 
