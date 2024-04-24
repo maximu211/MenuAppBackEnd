@@ -18,10 +18,20 @@ namespace MenuApp.API.Controllers
             _receiptService = receiptService;
         }
 
-        [HttpPost]
+        [HttpPost("create_receipt")]
         public async Task<IActionResult> AddReceipt(ReceiptsDTO receipt)
         {
             var result = await _receiptService.AddReceipt(receipt);
+            if (result.Success == true)
+                return Ok(result);
+            else
+                return BadRequest(result.Message);
+        }
+
+        [HttpDelete("delete_receipt")]
+        public async Task<IActionResult> DeleteReceipt(DeleteReceiptDTO receiptId)
+        {
+            var result = await _receiptService.DeleteReceipt(receiptId);
             if (result.Success == true)
                 return Ok(result);
             else

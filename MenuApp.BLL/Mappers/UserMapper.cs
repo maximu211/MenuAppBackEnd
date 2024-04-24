@@ -21,10 +21,10 @@ namespace MenuApp.BLL.Mappers
                 .ForMember(dest => dest.Username, opt => opt.MapFrom(src => src.Username))
                 .ForMember(dest => dest.Image, opt => opt.MapFrom(src => src.Image));
 
-            CreateMap<ReceiptsDTO, Receipts>()
+            CreateMap<ReceiptsDTO, Receipes>()
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => ObjectId.Parse(src.Id)))
                 .ForMember(
-                    dest => dest.UserId,
+                    dest => dest.CreatorId,
                     opt => opt.MapFrom(src => ObjectId.Parse(src.UserId))
                 )
                 .ForMember(

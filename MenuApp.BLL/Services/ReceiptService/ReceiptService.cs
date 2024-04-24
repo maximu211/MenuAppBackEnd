@@ -12,10 +12,10 @@ namespace MenuApp.BLL.Services.ReceiptService
 {
     public interface IReceiptService
     {
-        Task<ServiceResult> GetReceiptsById(ObjectId userId);
+        Task<ServiceResult> GetReceiptsByUserId(GetReceiptByUserIdDTO userId);
         Task<ServiceResult> GetReceiptsBySubscriptions(ObjectId userId);
-        Task<ServiceResult> DeleteReceipt(ObjectId receiptId);
-        Task<ServiceResult> UpdateReceipt(Receipts receipt);
+        Task<ServiceResult> DeleteReceipt(DeleteReceiptDTO receiptId);
+        Task<ServiceResult> UpdateReceipt(Receipes receipt);
         Task<ServiceResult> AddReceipt(ReceiptsDTO receipt);
     }
 
@@ -23,14 +23,14 @@ namespace MenuApp.BLL.Services.ReceiptService
     {
         private readonly ILogger<ReceiptService> _logger;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly IReceiptsRepository _receiptsRepository;
+        private readonly IReceipesRepository _receiptsRepository;
         private readonly IGenerateJwtToken _jwtGenerator;
         private readonly IMapper _mapper;
 
         public ReceiptService(
             ILogger<ReceiptService> logger,
             IHttpContextAccessor httpContextAccessor,
-            IReceiptsRepository receiptsRepository,
+            IReceipesRepository receiptsRepository,
             IGenerateJwtToken generateJwtToken,
             IMapper mapper
         )
@@ -57,7 +57,7 @@ namespace MenuApp.BLL.Services.ReceiptService
 
                 receipt.UserId = userIdClaim.Value;
 
-                await _receiptsRepository.AddReceipt(_mapper.Map<Receipts>(receipt));
+                await _receiptsRepository.AddReceipt(_mapper.Map<Receipes>(receipt));
 
                 _logger.LogInformation($"Receipt successfuly created by user: {userIdClaim.Value}");
                 return new ServiceResult(true, "Receipt successfuly created");
@@ -69,14 +69,41 @@ namespace MenuApp.BLL.Services.ReceiptService
             }
         }
 
-        public Task<ServiceResult> DeleteReceipt(ObjectId receiptId)
+        public async Task<ServiceResult> DeleteReceipt(DeleteReceiptDTO receiptId)
         {
-            throw new NotImplementedException();
+            try
+            {
+                await _receiptsRepository.DeleteReceipt(ObjectId.Parse(receiptId.ReceiptId));
+                _logger.LogInformation($"Receipt {receiptId} successfuly deleted");
+                return new ServiceResult(true, "Receipt successfuly deleted");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"An error occurred while deleting receipt: {ex}");
+                return new ServiceResult(false, "An error occurred while deleting receipt");
+            }
         }
 
-        public Task<ServiceResult> GetReceiptsById(ObjectId userId)
+        public async Task<ServiceResult> GetReceiptsByUserId(
+            GetReceiptByUserIdDTO getReceiptByUserId
+        )
         {
-            throw new NotImplementedException();
+            try
+            {
+                var receiptList = await _receiptsRepository.GetReceiptsByUserId(
+                    ObjectId.Parse(getReceiptByUserId.UserId)
+                );
+
+                _logger.LogInformation(
+                    $"Data successfuly sended by userid: {getReceiptByUserId.UserId}"
+                );
+                return new ServiceResult(true, "Receipt List succesfuly sended", receiptList);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"An error occurred while sending receipt list by userId {ex}");
+                return new ServiceResult(false, "An error occurred while sending receipt list");
+            }
         }
 
         public Task<ServiceResult> GetReceiptsBySubscriptions(ObjectId userId)
@@ -84,7 +111,7 @@ namespace MenuApp.BLL.Services.ReceiptService
             throw new NotImplementedException();
         }
 
-        public Task<ServiceResult> UpdateReceipt(Receipts receipt)
+        public Task<ServiceResult> UpdateReceipt(Receipes receipt)
         {
             throw new NotImplementedException();
         }

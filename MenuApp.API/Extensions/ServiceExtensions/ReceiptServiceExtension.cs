@@ -9,7 +9,7 @@ namespace MenuApp.API.Extensions.ServiceExtensions
         public static IServiceCollection AddReceiptService(this IServiceCollection services)
         {
             services.AddScoped<IReceiptService, ReceiptService>();
-            services.AddScoped<IReceiptsRepository, ReceiptsRepository>();
+            services.AddScoped<IReceipesRepository, ReceipesRepository>();
 
             return services;
         }

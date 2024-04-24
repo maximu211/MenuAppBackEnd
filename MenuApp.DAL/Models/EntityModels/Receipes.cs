@@ -2,10 +2,10 @@
 
 namespace MenuApp.DAL.Models.EntityModels
 {
-    public class Receipts
+    public class Receipes
     {
         public ObjectId Id { get; set; }
-        public ObjectId UserId { get; set; }
+        public ObjectId CreatorId { get; set; }
         public required string Name { get; set; }
         public CookingTime CookTime { get; set; }
         public CookingDifficulty CookingDifficulty { get; set; }
