@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 using MenuApp.DAL.Models.EntityModels;
 using MongoDB.Bson;
 
-namespace MenuApp.DAL.Models.AggregetionModels.ReceiptAggregetionModels
+namespace MenuApp.DAL.Models.AggregetionModels
 {
-    public class ReceipeUserSubModel : ReceipeSubsModel
+    public class RecipeWithUserModel : Recipes
     {
-        public Users User { get; set; }
+        public required Users User { get; set; }
     }
 }

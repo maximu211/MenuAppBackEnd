@@ -4,10 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MenuApp.BLL.DTO.RecipesDTOs
+namespace MenuApp.DAL.Models.Enums
 {
-    public class GetRecipeByUserIdDTO
+    public enum CookingDifficulty
     {
-        public required string UserId { get; set; }
+        easy,
+        medium,
+        hard,
+        veryHard,
     }
 }

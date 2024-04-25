@@ -4,20 +4,21 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using MenuApp.DAL.Models.EntityModels;
+using MenuApp.DAL.Models.Enums;
 using MongoDB.Bson;
 
-namespace MenuApp.BLL.DTO.ReceiptsDTOs
+namespace MenuApp.BLL.DTO.RecipesDTOs
 {
-    public class ReceiptsDTO
+    public class RecipesDTO
     {
         public required string Id { get; set; }
         public required string UserId { get; set; }
         public required string Name { get; set; }
         public CookingTime CookTime { get; set; }
         public CookingDifficulty CookingDifficulty { get; set; }
-        public required string ReceiptType { get; set; }
-        public List<ReceiptDescriptionElement> ReceiptDescriptionElements { get; set; } =
-            new List<ReceiptDescriptionElement>();
-        public List<string> ReceiptIngradients { get; set; } = new List<string>();
+        public required string RecipeType { get; set; }
+        public List<RecipeDescriptionElement> RecipeDescriptionElements { get; set; } =
+            new List<RecipeDescriptionElement>();
+        public List<string> RecipeIngradients { get; set; } = new List<string>();
     }
 }

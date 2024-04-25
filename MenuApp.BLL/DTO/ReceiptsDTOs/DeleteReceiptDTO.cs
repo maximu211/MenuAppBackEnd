@@ -5,10 +5,10 @@ using System.Text;
 using System.Threading.Tasks;
 using MongoDB.Bson;
 
-namespace MenuApp.BLL.DTO.ReceiptsDTOs
+namespace MenuApp.BLL.DTO.RecipesDTOs
 {
-    public class DeleteReceiptDTO
+    public class DeleteRecipeDTO
     {
-        public required string ReceiptId { get; set; }
+        public required string RecipeId { get; set; }
     }
 }

@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AutoMapper;
 using MenuApp.BLL.DTO.SubscriptionDTOs;
-using MenuApp.BLL.DTO.UserDTO;
+using MenuApp.BLL.DTO.UserDTOs;
 using MenuApp.BLL.Services.MenuApp.BLL.Services;
 using MenuApp.BLL.Utils.Authorization;
 using MenuApp.DAL.Models;
@@ -62,10 +62,10 @@ namespace MenuApp.BLL.Services.SubscriptionService
 
                 ObjectId userId = _jwtGenerator.GetUserIdFromJwtToken(userIdClaim.Value);
 
-                List<UsersDTO> subscribedUsersList = (
+                List<UserDTO> subscribedUsersList = (
                     await _subscriptionRepository.GetSubscribedUsers(userId)
                 )
-                    .Select(user => _mapper.Map<UsersDTO>(user))
+                    .Select(user => _mapper.Map<UserDTO>(user))
                     .ToList();
 
                 _logger.LogInformation($"User {userId} successfuly get subscriberd users list");
@@ -100,7 +100,7 @@ namespace MenuApp.BLL.Services.SubscriptionService
 
                 ObjectId userId = _jwtGenerator.GetUserIdFromJwtToken(userIdClaim.Value);
 
-                List<UsersDTO> subscribersDTOList = _mapper.Map<List<UsersDTO>>(
+                List<UserDTO> subscribersDTOList = _mapper.Map<List<UserDTO>>(
                     await _subscriptionRepository.GetSubscribers(userId)
                 );
 

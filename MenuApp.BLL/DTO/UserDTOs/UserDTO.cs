@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MenuApp.BLL.DTO.UserDTO
+namespace MenuApp.BLL.DTO.UserDTOs
 {
-    public class UsersDTO
+    public class UserDTO
     {
         public required string Id { get; set; }
         public required string Username { get; set; }

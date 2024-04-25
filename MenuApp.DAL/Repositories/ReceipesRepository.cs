@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using MenuApp.DAL.DataBaseContext;
-using MenuApp.DAL.Models.AggregetionModels.ReceiptAggregetionModels;
+﻿using MenuApp.DAL.DataBaseContext;
+using MenuApp.DAL.Models.AggregetionModels;
 using MenuApp.DAL.Models.EntityModels;
 using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
 
@@ -12,68 +10,68 @@ namespace MenuApp.DAL.Repositories
 {
     public interface IReceipesRepository
     {
-        Task<List<ReceipeUserModel>> GetReceiptsByUserId(ObjectId userId);
-        Task<List<ReceipeUserModel>> GetReceiptsBySubscriptions(ObjectId userId);
-        Task<List<ReceipeUserModel>> GetSavedReceiptsByUserid(ObjectId userId);
-        Task DeleteReceipt(ObjectId receiptId);
-        Task UpdateReceipt(Receipes receipt);
-        Task AddReceipt(Receipes receipt);
-        Task LikeReceipt(ObjectId userId, ObjectId receiptId);
-        Task SaveReceipt(ObjectId userId, ObjectId receiptId);
-        Task DislikeReceipt(ObjectId userId, ObjectId receiptId);
-        Task DeleteReceiptFromSaved(ObjectId userId, ObjectId receiptId);
+        Task<List<RecipeWithUserModel>> GetRecipesByUserId(ObjectId userId);
+        Task<List<RecipeWithUserModel>> GetRecipesBySubscriptions(ObjectId userId);
+        Task<List<RecipeWithUserModel>> GetSavedRecipesByUserid(ObjectId userId);
+        Task DeleteRecipe(ObjectId RecipeId);
+        Task UpdateRecipe(Recipes Recipe);
+        Task AddRecipe(Recipes Recipe);
+        Task LikeRecipe(ObjectId userId, ObjectId RecipeId);
+        Task SaveRecipe(ObjectId userId, ObjectId RecipeId);
+        Task DislikeRecipe(ObjectId userId, ObjectId RecipeId);
+        Task DeleteFromSavedRecipe(ObjectId userId, ObjectId RecipeId);
     }
 
     public class ReceipesRepository : IReceipesRepository
     {
-        private readonly IMongoCollection<Receipes> _receipesСollection;
+        private readonly IMongoCollection<Recipes> _recipesCollection;
         private readonly IMongoCollection<Users> _usersCollection;
         private readonly IMongoCollection<Subscriptions> _subscriptionsCollection;
 
         public ReceipesRepository(DBContext context)
         {
-            _receipesСollection = context.GetCollection<Receipes>();
+            _recipesCollection = context.GetCollection<Recipes>();
             _usersCollection = context.GetCollection<Users>();
             _subscriptionsCollection = context.GetCollection<Subscriptions>();
         }
 
-        public async Task AddReceipt(Receipes receipt)
+        public async Task AddRecipe(Recipes Recipe)
         {
-            await _receipesСollection.InsertOneAsync(receipt);
+            await _recipesCollection.InsertOneAsync(Recipe);
         }
 
-        public async Task DeleteReceipt(ObjectId receiptId)
+        public async Task DeleteRecipe(ObjectId RecipeId)
         {
-            await _receipesСollection.DeleteOneAsync(r => r.Id == receiptId);
+            await _recipesCollection.DeleteOneAsync(r => r.Id == RecipeId);
         }
 
-        public async Task DeleteReceiptFromSaved(ObjectId userId, ObjectId receiptId)
+        public async Task DeleteFromSavedRecipe(ObjectId userId, ObjectId RecipeId)
         {
-            var filter = Builders<Receipes>.Filter.Eq(r => r.Id, receiptId);
-            var update = Builders<Receipes>.Update.PullFilter(
+            var filter = Builders<Recipes>.Filter.Eq(r => r.Id, RecipeId);
+            var update = Builders<Recipes>.Update.PullFilter(
                 r => r.Saved,
                 Builders<ObjectId>.Filter.Eq(savedUserId => savedUserId, userId)
             );
 
-            await _receipesСollection.UpdateOneAsync(filter, update);
+            await _recipesCollection.UpdateOneAsync(filter, update);
         }
 
-        public async Task DislikeReceipt(ObjectId userId, ObjectId receiptId)
+        public async Task DislikeRecipe(ObjectId userId, ObjectId RecipeId)
         {
-            var filter = Builders<Receipes>.Filter.Eq(r => r.Id, receiptId);
-            var update = Builders<Receipes>.Update.PullFilter(
+            var filter = Builders<Recipes>.Filter.Eq(r => r.Id, RecipeId);
+            var update = Builders<Recipes>.Update.PullFilter(
                 r => r.Likes,
                 Builders<ObjectId>.Filter.Eq(savedUserId => savedUserId, userId)
             );
 
-            await _receipesСollection.UpdateOneAsync(filter, update);
+            await _recipesCollection.UpdateOneAsync(filter, update);
         }
 
-        public async Task<List<ReceipeUserModel>> GetReceiptsByUserId(ObjectId userId)
+        public async Task<List<RecipeWithUserModel>> GetRecipesByUserId(ObjectId userId)
         {
-            var receiptList = await _receipesСollection
+            var RecipeList = await _recipesCollection
                 .Aggregate()
-                .Lookup<Receipes, Users, ReceipeUserModel>(
+                .Lookup<Recipes, Users, RecipeWithUserModel>(
                     foreignCollection: _usersCollection,
                     localField: rec => rec.CreatorId,
                     foreignField: u => u.Id,
@@ -83,85 +81,93 @@ namespace MenuApp.DAL.Repositories
                 .SortByDescending(r => r.CreatedAt)
                 .ToListAsync();
 
-            return receiptList;
+            return RecipeList;
         }
 
-        public async Task<List<ReceipeUserSubModel>> GetReceiptsBySubscriptions(ObjectId userId)
+        public async Task<List<RecipeWithUserModel>> GetRecipesBySubscriptions(ObjectId userId)
         {
-            var receiptList = await _subscriptionsCollection
-                .Aggregate()
-                .Match(sub => sub.UserId == userId) // Фільтрація підписок за userId
-                .Lookup<Subscriptions, Receipes, ReceipeSubModel>(
-                    foreignCollection: _receipesСollection,
-                    localField: sub => sub.Subscribers, // Поле підписників у колекції підписок
-                    foreignField: rec => rec.CreatorId, // Поле створювача у колекції рецептів
-                    @as: rsm => rsm.UserReceipts // Псевдонім для результатів з'єднання
-                )
-                .Unwind<ReceipeSubModel, Receipes>(rsm => rsm.UserReceipts) // Розгортання результатів з'єднання
-                .Lookup<Receipes, Users, ReceipeUserSubModel>(
-                    foreignCollection: _usersCollection,
-                    localField: rec => rec.CreatorId,
-                    foreignField: user => user.Id,
-                    @as: (rec, user) => new ReceipeUserSubModel { Receipe = rec, User = user }
-                )
-                .SortByDescending(rusm => rusm.Receipe.CreatedAt) // Сортування за датою створення рецепту
-                .ToListAsync();
+            {
+                var userSubscriptions = await _subscriptionsCollection
+                    .Find(sub => sub.UserId == userId)
+                    .FirstOrDefaultAsync();
 
-            return receiptList;
+                if (userSubscriptions == null)
+                    return new List<RecipeWithUserModel>();
+
+                var subscribedUserIds = userSubscriptions.Subscribers;
+
+                var pipeline = await _recipesCollection
+                    .Aggregate()
+                    .Lookup(
+                        foreignCollection: _usersCollection,
+                        localField: recipe => recipe.CreatorId,
+                        foreignField: user => user.Id,
+                        @as: (RecipeWithUserModel recipeWithUser) => recipeWithUser.User
+                    )
+                    .Match(recipe => subscribedUserIds.Contains(recipe.User.Id))
+                    .ToListAsync();
+
+                return pipeline;
+            }
         }
 
-        public async Task LikeReceipt(ObjectId userId, ObjectId receiptId)
+        public async Task LikeRecipe(ObjectId userId, ObjectId RecipeId)
         {
-            var filter = Builders<Receipes>.Filter.And(
-                Builders<Receipes>.Filter.Eq(r => r.Id, receiptId),
-                Builders<Receipes>.Filter.Not(
-                    Builders<Receipes>.Filter.ElemMatch(
+            var filter = Builders<Recipes>.Filter.And(
+                Builders<Recipes>.Filter.Eq(r => r.Id, RecipeId),
+                Builders<Recipes>.Filter.Not(
+                    Builders<Recipes>.Filter.ElemMatch(
                         r => r.Likes,
                         savedUserId => savedUserId == userId
                     )
                 )
             );
 
-            var update = Builders<Receipes>.Update.AddToSet(r => r.Likes, userId);
+            var update = Builders<Recipes>.Update.AddToSet(r => r.Likes, userId);
 
-            await _receipesСollection.UpdateOneAsync(filter, update);
+            await _recipesCollection.UpdateOneAsync(filter, update);
         }
 
-        public async Task SaveReceipt(ObjectId userId, ObjectId receiptId)
+        public async Task SaveRecipe(ObjectId userId, ObjectId RecipeId)
         {
-            var filter = Builders<Receipes>.Filter.And(
-                Builders<Receipes>.Filter.Eq(r => r.Id, receiptId),
-                Builders<Receipes>.Filter.Not(
-                    Builders<Receipes>.Filter.ElemMatch(
+            var filter = Builders<Recipes>.Filter.And(
+                Builders<Recipes>.Filter.Eq(r => r.Id, RecipeId),
+                Builders<Recipes>.Filter.Not(
+                    Builders<Recipes>.Filter.ElemMatch(
                         r => r.Saved,
                         savedUserId => savedUserId == userId
                     )
                 )
             );
 
-            var update = Builders<Receipes>.Update.AddToSet(r => r.Saved, userId);
+            var update = Builders<Recipes>.Update.AddToSet(r => r.Saved, userId);
 
-            await _receipesСollection.UpdateOneAsync(filter, update);
+            await _recipesCollection.UpdateOneAsync(filter, update);
         }
 
-        public async Task UpdateReceipt(Receipes receipt)
+        public async Task UpdateRecipe(Recipes Recipe)
         {
-            var filter = Builders<Receipes>.Filter.Eq(r => r.Id, receipt.Id);
+            var filter = Builders<Recipes>.Filter.Eq(r => r.Id, Recipe.Id);
             var options = new ReplaceOptions { IsUpsert = false };
 
-            await _receipesСollection.ReplaceOneAsync(filter, receipt, options);
+            await _recipesCollection.ReplaceOneAsync(filter, Recipe, options);
         }
 
-        public Task<List<ReceipeUserModel>> GetSavedReceiptsByUserid(ObjectId userId)
+        public async Task<List<RecipeWithUserModel>> GetSavedRecipesByUserid(ObjectId userId)
         {
-            throw new NotImplementedException();
-        }
-    }
+            var RecipeList = await _recipesCollection
+                .Aggregate()
+                .Lookup<Recipes, Users, RecipeWithUserModel>(
+                    foreignCollection: _usersCollection,
+                    localField: rec => rec.CreatorId,
+                    foreignField: u => u.Id,
+                    @as: ram => ram.User
+                )
+                .Match(r => r.Saved.Contains(userId))
+                .SortByDescending(r => r.CreatedAt)
+                .ToListAsync();
 
-    public class ReceipeSubModel
-    {
-        public ObjectId Id { get; set; } // Ідентифікатор рецепту
-        public ObjectId CreatorId { get; set; } // Ідентифікатор створювача рецепту
-        // Додайте інші поля, які ви хочете включити з колекції рецептів
+            return RecipeList;
+        }
     }
 }

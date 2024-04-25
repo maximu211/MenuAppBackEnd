@@ -1,5 +1,5 @@
-﻿using MenuApp.BLL.DTO.ReceiptsDTOs;
-using MenuApp.BLL.Services.ReceiptService;
+﻿using MenuApp.BLL.DTO.RecipesDTOs;
+using MenuApp.BLL.Services.RecipeService;
 using MenuApp.BLL.Services.SubscriptionService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -9,29 +9,29 @@ namespace MenuApp.API.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
-    public class ReceiptController : ControllerBase
+    public class RecipeController : ControllerBase
     {
-        private readonly IReceiptService _receiptService;
+        private readonly IRecipeService _RecipeService;
 
-        public ReceiptController(IReceiptService receiptService)
+        public RecipeController(IRecipeService RecipeService)
         {
-            _receiptService = receiptService;
+            _RecipeService = RecipeService;
         }
 
-        [HttpPost("create_receipt")]
-        public async Task<IActionResult> AddReceipt(ReceiptsDTO receipt)
+        [HttpPost("create_Recipe")]
+        public async Task<IActionResult> AddRecipe(RecipesDTO Recipe)
         {
-            var result = await _receiptService.AddReceipt(receipt);
+            var result = await _RecipeService.AddRecipe(Recipe);
             if (result.Success == true)
                 return Ok(result);
             else
                 return BadRequest(result.Message);
         }
 
-        [HttpDelete("delete_receipt")]
-        public async Task<IActionResult> DeleteReceipt(DeleteReceiptDTO receiptId)
+        [HttpDelete("delete_Recipe")]
+        public async Task<IActionResult> DeleteRecipe(DeleteRecipeDTO RecipeId)
         {
-            var result = await _receiptService.DeleteReceipt(receiptId);
+            var result = await _RecipeService.DeleteRecipe(RecipeId);
             if (result.Success == true)
                 return Ok(result);
             else
