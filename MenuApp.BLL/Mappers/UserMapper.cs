@@ -44,8 +44,7 @@ namespace MenuApp.BLL.Mappers
                     opt => opt.MapFrom(src => src.RecipeIngradients)
                 );
 
-            CreateMap<RecipeWithUserModel, CardRecipeDTO>()
-
+            CreateMap<RecipeWithUserModel, CardRecipeDTO>(ObjectId userId)
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using MenuApp.BLL.DTO.RecipesDTOs;
+using MenuApp.BLL.Mappers;
 using MenuApp.BLL.Services.MenuApp.BLL.Services;
 using MenuApp.BLL.Utils.Authorization;
 using MenuApp.DAL.Models.EntityModels;
@@ -28,14 +29,14 @@ namespace MenuApp.BLL.Services.RecipeService
     {
         private readonly ILogger<ReceipService> _logger;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly IReceipesRepository _RecipesRepository;
+        private readonly IReceipesRepository _recipesRepository;
         private readonly IGenerateJwtToken _jwtGenerator;
         private readonly IMapper _mapper;
 
         public ReceipService(
             ILogger<ReceipService> logger,
             IHttpContextAccessor httpContextAccessor,
-            IReceipesRepository RecipesRepository,
+            IReceipesRepository recipesRepository,
             IGenerateJwtToken generateJwtToken,
             IMapper mapper
         )
@@ -43,7 +44,7 @@ namespace MenuApp.BLL.Services.RecipeService
             _logger = logger;
             _httpContextAccessor =
                 httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
-            _RecipesRepository = RecipesRepository;
+            _recipesRepository = recipesRepository;
             _jwtGenerator = generateJwtToken;
             _mapper = mapper;
         }
@@ -62,7 +63,7 @@ namespace MenuApp.BLL.Services.RecipeService
 
                 Recipe.UserId = userIdClaim.Value;
 
-                await _RecipesRepository.AddRecipe(_mapper.Map<Recipes>(Recipe));
+                await _recipesRepository.AddRecipe(_mapper.Map<Recipes>(Recipe));
 
                 _logger.LogInformation($"Recipe successfuly created by user: {userIdClaim.Value}");
                 return new ServiceResult(true, "Recipe successfuly created");
@@ -78,7 +79,7 @@ namespace MenuApp.BLL.Services.RecipeService
         {
             try
             {
-                await _RecipesRepository.DeleteRecipe(ObjectId.Parse(RecipeId.RecipeId));
+                await _recipesRepository.DeleteRecipe(ObjectId.Parse(RecipeId.RecipeId));
                 _logger.LogInformation($"Recipe {RecipeId} successfuly deleted");
                 return new ServiceResult(true, "Recipe successfuly deleted");
             }
@@ -93,7 +94,7 @@ namespace MenuApp.BLL.Services.RecipeService
         {
             try
             {
-                var RecipeList = await _RecipesRepository.GetRecipesByUserId(
+                var RecipeList = await _recipesRepository.GetRecipesByUserId(
                     ObjectId.Parse(getRecipeByUserId.UserId)
                 );
 
@@ -109,9 +110,25 @@ namespace MenuApp.BLL.Services.RecipeService
             }
         }
 
-        public Task<ServiceResult> GetRecipesBySubscriptions(ObjectId userId)
+        public async Task<ServiceResult> GetRecipesBySubscriptions()
         {
-            throw new NotImplementedException();
+            try
+            {
+                var userIdClaim = _httpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(c =>
+                    c.Type == "userId"
+                );
+                if (userIdClaim == null)
+                {
+                    throw new Exception("userId claim is missing in the token");
+                }
+
+                ObjectId userId = _jwtGenerator.GetUserIdFromJwtToken(userIdClaim.Value);
+
+                var cardRecipeDTOList = (await _recipesRepository.GetRecipesBySubscriptions(userId))
+                    .Select(recipe => CardRecipeMapper.MapToCardRecipeDTO(recipe, userId, _mapper))
+                    .ToList();
+            }
+            catch (Exception ex) { }
         }
 
         public Task<ServiceResult> UpdateRecipe(Recipes Recipe)
