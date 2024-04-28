@@ -12,13 +12,12 @@ namespace MenuApp.BLL.DTO.RecipesDTOs
     public class RecipesDTO
     {
         public required string Id { get; set; }
-        public required string UserId { get; set; }
+        public required string CreatorId { get; set; }
         public required string Name { get; set; }
         public CookingTime CookTime { get; set; }
         public CookingDifficulty CookingDifficulty { get; set; }
         public required string RecipeType { get; set; }
-        public List<RecipeDescriptionElement> RecipeDescriptionElements { get; set; } =
-            new List<RecipeDescriptionElement>();
-        public List<string> RecipeIngradients { get; set; } = new List<string>();
+        public required List<RecipeDescriptionElement> RecipeDescriptionElements { get; set; }
+        public required List<string> RecipeIngradients { get; set; }
     }
 }

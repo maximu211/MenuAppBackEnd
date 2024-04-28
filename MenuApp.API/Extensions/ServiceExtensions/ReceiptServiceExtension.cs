@@ -8,8 +8,8 @@ namespace MenuApp.API.Extensions.ServiceExtensions
     {
         public static IServiceCollection AddRecipeService(this IServiceCollection services)
         {
-            services.AddScoped<IRecipeService, ReceipService>();
-            services.AddScoped<IReceipesRepository, ReceipesRepository>();
+            services.AddScoped<IRecipeService, RecipeService>();
+            services.AddScoped<IReceipesRepository, RecipesRepository>();
 
             return services;
         }

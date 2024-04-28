@@ -21,5 +21,6 @@ namespace MenuApp.BLL.DTO.RecipesDTOs
         public bool IsDishSaved { get; set; }
         public bool IsDishLiked { get; set; }
         public int LikesCount { get; set; }
+        public bool IsOwner { get; set; }
     }
 }

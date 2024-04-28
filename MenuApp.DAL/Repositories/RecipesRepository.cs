@@ -16,38 +16,39 @@ namespace MenuApp.DAL.Repositories
         Task DeleteRecipe(ObjectId RecipeId);
         Task UpdateRecipe(Recipes Recipe);
         Task AddRecipe(Recipes Recipe);
-        Task LikeRecipe(ObjectId userId, ObjectId RecipeId);
-        Task SaveRecipe(ObjectId userId, ObjectId RecipeId);
-        Task DislikeRecipe(ObjectId userId, ObjectId RecipeId);
-        Task DeleteFromSavedRecipe(ObjectId userId, ObjectId RecipeId);
+        Task LikeRecipe(ObjectId userId, ObjectId recipeId);
+        Task SaveRecipe(ObjectId userId, ObjectId recipeId);
+        Task DislikeRecipe(ObjectId userId, ObjectId recipeId);
+        Task DeleteFromSavedRecipe(ObjectId userId, ObjectId recipeId);
+        Task<Recipes> GetRecipeById(ObjectId recipeId);
     }
 
-    public class ReceipesRepository : IReceipesRepository
+    public class RecipesRepository : IReceipesRepository
     {
         private readonly IMongoCollection<Recipes> _recipesCollection;
         private readonly IMongoCollection<Users> _usersCollection;
         private readonly IMongoCollection<Subscriptions> _subscriptionsCollection;
 
-        public ReceipesRepository(DBContext context)
+        public RecipesRepository(DBContext context)
         {
             _recipesCollection = context.GetCollection<Recipes>();
             _usersCollection = context.GetCollection<Users>();
             _subscriptionsCollection = context.GetCollection<Subscriptions>();
         }
 
-        public async Task AddRecipe(Recipes Recipe)
+        public async Task AddRecipe(Recipes recipe)
         {
-            await _recipesCollection.InsertOneAsync(Recipe);
+            await _recipesCollection.InsertOneAsync(recipe);
         }
 
-        public async Task DeleteRecipe(ObjectId RecipeId)
+        public async Task DeleteRecipe(ObjectId recipeId)
         {
-            await _recipesCollection.DeleteOneAsync(r => r.Id == RecipeId);
+            await _recipesCollection.DeleteOneAsync(r => r.Id == recipeId);
         }
 
-        public async Task DeleteFromSavedRecipe(ObjectId userId, ObjectId RecipeId)
+        public async Task DeleteFromSavedRecipe(ObjectId userId, ObjectId recipeId)
         {
-            var filter = Builders<Recipes>.Filter.Eq(r => r.Id, RecipeId);
+            var filter = Builders<Recipes>.Filter.Eq(r => r.Id, recipeId);
             var update = Builders<Recipes>.Update.PullFilter(
                 r => r.Saved,
                 Builders<ObjectId>.Filter.Eq(savedUserId => savedUserId, userId)
@@ -56,9 +57,9 @@ namespace MenuApp.DAL.Repositories
             await _recipesCollection.UpdateOneAsync(filter, update);
         }
 
-        public async Task DislikeRecipe(ObjectId userId, ObjectId RecipeId)
+        public async Task DislikeRecipe(ObjectId userId, ObjectId recipeId)
         {
-            var filter = Builders<Recipes>.Filter.Eq(r => r.Id, RecipeId);
+            var filter = Builders<Recipes>.Filter.Eq(r => r.Id, recipeId);
             var update = Builders<Recipes>.Update.PullFilter(
                 r => r.Likes,
                 Builders<ObjectId>.Filter.Eq(savedUserId => savedUserId, userId)
@@ -111,10 +112,10 @@ namespace MenuApp.DAL.Repositories
             }
         }
 
-        public async Task LikeRecipe(ObjectId userId, ObjectId RecipeId)
+        public async Task LikeRecipe(ObjectId userId, ObjectId recipeId)
         {
             var filter = Builders<Recipes>.Filter.And(
-                Builders<Recipes>.Filter.Eq(r => r.Id, RecipeId),
+                Builders<Recipes>.Filter.Eq(r => r.Id, recipeId),
                 Builders<Recipes>.Filter.Not(
                     Builders<Recipes>.Filter.ElemMatch(
                         r => r.Likes,
@@ -128,10 +129,10 @@ namespace MenuApp.DAL.Repositories
             await _recipesCollection.UpdateOneAsync(filter, update);
         }
 
-        public async Task SaveRecipe(ObjectId userId, ObjectId RecipeId)
+        public async Task SaveRecipe(ObjectId userId, ObjectId recipeId)
         {
             var filter = Builders<Recipes>.Filter.And(
-                Builders<Recipes>.Filter.Eq(r => r.Id, RecipeId),
+                Builders<Recipes>.Filter.Eq(r => r.Id, recipeId),
                 Builders<Recipes>.Filter.Not(
                     Builders<Recipes>.Filter.ElemMatch(
                         r => r.Saved,
@@ -145,12 +146,12 @@ namespace MenuApp.DAL.Repositories
             await _recipesCollection.UpdateOneAsync(filter, update);
         }
 
-        public async Task UpdateRecipe(Recipes Recipe)
+        public async Task UpdateRecipe(Recipes recipe)
         {
-            var filter = Builders<Recipes>.Filter.Eq(r => r.Id, Recipe.Id);
+            var filter = Builders<Recipes>.Filter.Eq(r => r.Id, recipe.Id);
             var options = new ReplaceOptions { IsUpsert = false };
 
-            await _recipesCollection.ReplaceOneAsync(filter, Recipe, options);
+            await _recipesCollection.ReplaceOneAsync(filter, recipe, options);
         }
 
         public async Task<List<RecipeWithUserModel>> GetSavedRecipesByUserid(ObjectId userId)
@@ -168,6 +169,14 @@ namespace MenuApp.DAL.Repositories
                 .ToListAsync();
 
             return RecipeList;
+        }
+
+        public async Task<Recipes> GetRecipeById(ObjectId recipeId)
+        {
+            return await _recipesCollection
+                .AsQueryable()
+                .Where(r => r.Id == recipeId)
+                .FirstOrDefaultAsync();
         }
     }
 }

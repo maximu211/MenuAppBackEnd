@@ -14,9 +14,8 @@ namespace MenuApp.DAL.Models.EntityModels
         public required string ReceipeImage { get; set; }
         public List<ObjectId> Likes { get; set; } = new List<ObjectId>();
         public List<ObjectId> Saved { get; set; } = new List<ObjectId>();
-        public List<RecipeDescriptionElement> RecipeDescriptionElements { get; set; } =
-            new List<RecipeDescriptionElement>();
-        public List<string> RecipeIngradients { get; set; } = new List<string>();
+        public required List<RecipeDescriptionElement> RecipeDescriptionElements { get; set; }
+        public required List<string> RecipeIngradients { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 

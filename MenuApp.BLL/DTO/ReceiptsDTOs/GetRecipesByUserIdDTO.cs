@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MenuApp.BLL.DTO.RecipesDTOs
 {
-    public class GetRecipeByUserIdDTO
+    public class GetRecipesByUserIdDTO
     {
         public required string UserId { get; set; }
     }

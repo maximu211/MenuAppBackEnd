@@ -31,7 +31,8 @@ namespace MenuApp.BLL.Mappers
                 ReceiptType = recipeWithUser.RecipeType,
                 IsDishSaved = recipeWithUser.Saved.Contains(userId),
                 IsDishLiked = recipeWithUser.Likes.Contains(userId),
-                LikesCount = recipeWithUser.Likes.Count
+                LikesCount = recipeWithUser.Likes.Count,
+                IsOwner = recipeWithUser.CreatorId == userId
             };
         }
     }

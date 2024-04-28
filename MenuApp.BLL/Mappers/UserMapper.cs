@@ -5,6 +5,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using AutoMapper;
+using MenuApp.BLL.DTO.ReceiptsDTOs;
 using MenuApp.BLL.DTO.RecipesDTOs;
 using MenuApp.BLL.DTO.UserDTOs;
 using MenuApp.DAL.Models.AggregetionModels;
@@ -26,7 +27,7 @@ namespace MenuApp.BLL.Mappers
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => ObjectId.Parse(src.Id)))
                 .ForMember(
                     dest => dest.CreatorId,
-                    opt => opt.MapFrom(src => ObjectId.Parse(src.UserId))
+                    opt => opt.MapFrom(src => ObjectId.Parse(src.CreatorId))
                 )
                 .ForMember(
                     dest => dest.CookingDifficulty,
@@ -44,7 +45,15 @@ namespace MenuApp.BLL.Mappers
                     opt => opt.MapFrom(src => src.RecipeIngradients)
                 );
 
-            CreateMap<RecipeWithUserModel, CardRecipeDTO>(ObjectId userId)
+            CreateMap<Recipes, RecipeDetailDTO>()
+                .ForMember(
+                    dest => dest.RecipeDescriptionElements,
+                    opt => opt.MapFrom(src => src.RecipeDescriptionElements)
+                )
+                .ForMember(
+                    dest => dest.RecipeIngradients,
+                    opt => opt.MapFrom(src => src.RecipeIngradients)
+                );
         }
     }
 }
