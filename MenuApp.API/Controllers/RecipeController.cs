@@ -20,7 +20,7 @@ namespace MenuApp.API.Controllers
         }
 
         [HttpPost("create_recipe")]
-        public async Task<IActionResult> AddRecipe(RecipesDTO recipe)
+        public async Task<IActionResult> AddRecipe(RecipeDTO recipe)
         {
             var result = await _recipeService.AddRecipe(recipe);
             if (result.Success == true)
@@ -70,7 +70,7 @@ namespace MenuApp.API.Controllers
         }
 
         [HttpPut("update_recipe")]
-        public async Task<IActionResult> UpdateRecipe(RecipesDTO recipe)
+        public async Task<IActionResult> UpdateRecipe(RecipeDTO recipe)
         {
             var result = await _recipeService.UpdateRecipe(recipe);
             if (result.Success)

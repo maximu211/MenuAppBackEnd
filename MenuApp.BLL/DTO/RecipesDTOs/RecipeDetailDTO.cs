@@ -1,6 +1,6 @@
 ﻿using MenuApp.DAL.Models.EntityModels;
 
-namespace MenuApp.BLL.DTO.ReceiptsDTOs
+namespace MenuApp.BLL.DTO.RecipesDTOs
 {
     public class RecipeDetailDTO
     {

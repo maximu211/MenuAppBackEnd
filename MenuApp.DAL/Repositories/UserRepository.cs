@@ -1,13 +1,11 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using MenuApp.DAL.DataBaseContext;
+﻿using MenuApp.DAL.DataBaseContext;
 using MenuApp.DAL.Models.EntityModels;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace MenuApp.DAL.Repositories
 {
-    public interface IUsersRepository
+    public interface IUserRepository
     {
         Task<IEnumerable<Users>> GetUsers();
         Task AddUser(Users user);
@@ -28,7 +26,7 @@ namespace MenuApp.DAL.Repositories
         Task<string> GetUserImageByUserId(ObjectId userId);
     }
 
-    public class UserRepository : IUsersRepository
+    public class UserRepository : IUserRepository
     {
         private readonly IMongoCollection<Users> _collection;
 

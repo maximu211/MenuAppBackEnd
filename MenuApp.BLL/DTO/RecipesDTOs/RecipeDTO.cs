@@ -9,7 +9,7 @@ using MongoDB.Bson;
 
 namespace MenuApp.BLL.DTO.RecipesDTOs
 {
-    public class RecipesDTO
+    public class RecipeDTO
     {
         public required string Id { get; set; }
         public required string CreatorId { get; set; }

@@ -21,7 +21,7 @@ namespace MenuApp.BLL.Workers
                 using (var scope = _serviceProvider.CreateScope())
                 {
                     var userRepository =
-                        scope.ServiceProvider.GetRequiredService<IUsersRepository>();
+                        scope.ServiceProvider.GetRequiredService<IUserRepository>();
                     await userRepository.DeleteNonConfirmedEmails();
                 }
 

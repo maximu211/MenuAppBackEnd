@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using MenuApp.BLL.DTO.ReceiptsDTOs;
 using MenuApp.BLL.DTO.RecipesDTOs;
 using MenuApp.BLL.Mappers;
 using MenuApp.BLL.Services.MenuApp.BLL.Services;
@@ -19,8 +18,8 @@ namespace MenuApp.BLL.Services.RecipeService
         Task<ServiceResult> GetRecipesBySubscriptions();
         Task<ServiceResult> GetUserSavedRecipes();
         Task<ServiceResult> DeleteRecipe(string recipeId);
-        Task<ServiceResult> UpdateRecipe(RecipesDTO recipe);
-        Task<ServiceResult> AddRecipe(RecipesDTO recipe);
+        Task<ServiceResult> UpdateRecipe(RecipeDTO recipe);
+        Task<ServiceResult> AddRecipe(RecipeDTO recipe);
         Task<ServiceResult> LikeRecipe(string recipeId);
         Task<ServiceResult> SaveRecipe(string recipeId);
         Task<ServiceResult> DislikeRecipe(string recipeId);
@@ -32,14 +31,14 @@ namespace MenuApp.BLL.Services.RecipeService
     {
         private readonly ILogger<RecipeService> _logger;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly IReceipesRepository _recipesRepository;
+        private readonly IReceipeRepository _recipesRepository;
         private readonly IGenerateJwtToken _jwtGenerator;
         private readonly IMapper _mapper;
 
         public RecipeService(
             ILogger<RecipeService> logger,
             IHttpContextAccessor httpContextAccessor,
-            IReceipesRepository recipesRepository,
+            IReceipeRepository recipesRepository,
             IGenerateJwtToken generateJwtToken,
             IMapper mapper
         )
@@ -52,7 +51,7 @@ namespace MenuApp.BLL.Services.RecipeService
             _mapper = mapper;
         }
 
-        public async Task<ServiceResult> AddRecipe(RecipesDTO recipe)
+        public async Task<ServiceResult> AddRecipe(RecipeDTO recipe)
         {
             try
             {
@@ -159,7 +158,7 @@ namespace MenuApp.BLL.Services.RecipeService
             }
         }
 
-        public async Task<ServiceResult> UpdateRecipe(RecipesDTO recipeDTO)
+        public async Task<ServiceResult> UpdateRecipe(RecipeDTO recipeDTO)
         {
             try
             {
@@ -176,7 +175,7 @@ namespace MenuApp.BLL.Services.RecipeService
                         $"User {userId} is not creator of recipe {recipeDTO.CreatorId}"
                     );
 
-                var recipe = _mapper.Map<RecipesDTO, Recipes>(recipeDTO);
+                var recipe = _mapper.Map<RecipeDTO, Recipes>(recipeDTO);
                 await _recipesRepository.UpdateRecipe(recipe);
                 return new ServiceResult(true, "Recipe successfuly updated");
             }

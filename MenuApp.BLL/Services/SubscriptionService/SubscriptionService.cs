@@ -28,14 +28,14 @@ namespace MenuApp.BLL.Services.SubscriptionService
     {
         private readonly ILogger<SubscriptionService> _logger;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly ISubscriptionsRepository _subscriptionRepository;
+        private readonly ISubscriptionRepository _subscriptionRepository;
         private readonly IGenerateJwtToken _jwtGenerator;
         private readonly IMapper _mapper;
 
         public SubscriptionService(
             ILogger<SubscriptionService> logger,
             IHttpContextAccessor httpContextAccessor,
-            ISubscriptionsRepository subscriptionRepository,
+            ISubscriptionRepository subscriptionRepository,
             IGenerateJwtToken generateJwtToken,
             IMapper mapper
         )

@@ -32,7 +32,7 @@ namespace MenuApp.BLL.Services.UserService
 
     public class UserService : IUserService
     {
-        private readonly IUsersRepository _userRepository;
+        private readonly IUserRepository _userRepository;
         private readonly IGenerateJwtToken _jwtTokenGenerator;
         private readonly IPasswordHasher _passwordHasher;
         private readonly IEmailSender _emailSender;
@@ -41,7 +41,7 @@ namespace MenuApp.BLL.Services.UserService
         private readonly IHttpContextAccessor _httpContextAccessor;
 
         public UserService(
-            IUsersRepository userRepository,
+            IUserRepository userRepository,
             IGenerateJwtToken jwtTokenGenerator,
             IPasswordHasher passwordHasher,
             IEmailSender emailSender,

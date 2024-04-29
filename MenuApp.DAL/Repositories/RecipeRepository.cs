@@ -2,13 +2,12 @@
 using MenuApp.DAL.Models.AggregetionModels;
 using MenuApp.DAL.Models.EntityModels;
 using MongoDB.Bson;
-using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
 
 namespace MenuApp.DAL.Repositories
 {
-    public interface IReceipesRepository
+    public interface IReceipeRepository
     {
         Task<List<RecipeWithUserModel>> GetRecipesByUserId(ObjectId userId);
         Task<List<RecipeWithUserModel>> GetRecipesBySubscriptions(ObjectId userId);
@@ -23,13 +22,13 @@ namespace MenuApp.DAL.Repositories
         Task<Recipes> GetRecipeById(ObjectId recipeId);
     }
 
-    public class RecipesRepository : IReceipesRepository
+    public class RecipeRepository : IReceipeRepository
     {
         private readonly IMongoCollection<Recipes> _recipesCollection;
         private readonly IMongoCollection<Users> _usersCollection;
         private readonly IMongoCollection<Subscriptions> _subscriptionsCollection;
 
-        public RecipesRepository(DBContext context)
+        public RecipeRepository(DBContext context)
         {
             _recipesCollection = context.GetCollection<Recipes>();
             _usersCollection = context.GetCollection<Users>();
