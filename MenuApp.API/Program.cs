@@ -50,6 +50,7 @@ builder.Services.AddHostedService<UsersCleanUpWorker>();
 
 builder.Services.AddUserService();
 builder.Services.AddConfirmationCodesService();
+builder.Services.AddCommentService();
 builder.Services.AddSubscriptionService();
 builder.Services.AddRecipeService();
 

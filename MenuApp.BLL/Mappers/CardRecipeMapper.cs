@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using AutoMapper;
+﻿using AutoMapper;
 using MenuApp.BLL.DTO.RecipesDTOs;
 using MenuApp.BLL.DTO.UserDTOs;
 using MenuApp.DAL.Models.AggregetionModels;
@@ -22,8 +17,8 @@ namespace MenuApp.BLL.Mappers
         {
             return new CardRecipeDTO
             {
+                Id = recipeWithUser.Id.ToString(),
                 RecipePhoto = recipeWithUser.ReceipeImage,
-                ReceiptId = recipeWithUser.Id.ToString(),
                 User = mapper.Map<Users, UserDTO>(recipeWithUser.User),
                 Name = recipeWithUser.Name,
                 CookingDifficulty = recipeWithUser.CookingDifficulty,

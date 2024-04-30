@@ -11,8 +11,8 @@ namespace MenuApp.BLL.DTO.RecipesDTOs
 {
     public class CardRecipeDTO
     {
+        public required string Id { get; set; }
         public required string RecipePhoto { get; set; }
-        public required string ReceiptId { get; set; }
         public required UserDTO User { get; set; }
         public required string Name { get; set; }
         public CookingDifficulty CookingDifficulty { get; set; }
