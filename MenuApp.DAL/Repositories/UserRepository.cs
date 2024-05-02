@@ -2,6 +2,7 @@
 using MenuApp.DAL.Models.EntityModels;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using MongoDB.Driver.Linq;
 
 namespace MenuApp.DAL.Repositories
 {
@@ -24,6 +25,7 @@ namespace MenuApp.DAL.Repositories
         Task<Users> GetUserEmailByUserId(ObjectId userId);
         Task SetUserImage(ObjectId userId, string image);
         Task<string> GetUserImageByUserId(ObjectId userId);
+        Task<List<Users>> GetUsersBySearch(string query);
     }
 
     public class UserRepository : IUserRepository
@@ -158,6 +160,14 @@ namespace MenuApp.DAL.Repositories
             var user = await _collection.Find(filter).FirstOrDefaultAsync();
 
             return user.Image ?? string.Empty;
+        }
+
+        public async Task<List<Users>> GetUsersBySearch(string query)
+        {
+            return await _collection
+                .AsQueryable()
+                .Where(u => u.Username.Contains(query))
+                .ToListAsync();
         }
     }
 }

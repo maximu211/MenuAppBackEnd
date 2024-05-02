@@ -31,14 +31,14 @@ namespace MenuApp.BLL.Services.RecipeService
     {
         private readonly ILogger<RecipeService> _logger;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly IReceipeRepository _recipesRepository;
+        private readonly IRecipeRepository _recipesRepository;
         private readonly IGenerateJwtToken _jwtGenerator;
         private readonly IMapper _mapper;
 
         public RecipeService(
             ILogger<RecipeService> logger,
             IHttpContextAccessor httpContextAccessor,
-            IReceipeRepository recipesRepository,
+            IRecipeRepository recipesRepository,
             IGenerateJwtToken generateJwtToken,
             IMapper mapper
         )

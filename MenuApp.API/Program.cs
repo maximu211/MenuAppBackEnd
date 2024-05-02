@@ -4,7 +4,6 @@ using MenuApp.API.Extensions.ServiceExtensions;
 using MenuApp.BLL.Mappers;
 using MenuApp.BLL.Workers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;

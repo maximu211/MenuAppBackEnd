@@ -7,7 +7,7 @@ using MongoDB.Driver.Linq;
 
 namespace MenuApp.DAL.Repositories
 {
-    public interface IReceipeRepository
+    public interface IRecipeRepository
     {
         Task<List<RecipeWithUserModel>> GetRecipesByUserId(ObjectId userId);
         Task<List<RecipeWithUserModel>> GetRecipesBySubscriptions(ObjectId userId);
@@ -20,9 +20,10 @@ namespace MenuApp.DAL.Repositories
         Task DislikeRecipe(ObjectId userId, ObjectId recipeId);
         Task DeleteFromSavedRecipe(ObjectId userId, ObjectId recipeId);
         Task<Recipes> GetRecipeById(ObjectId recipeId);
+        Task<List<RecipeWithUserModel>> GetRecipesBySearch(string query);
     }
 
-    public class RecipeRepository : IReceipeRepository
+    public class RecipeRepository : IRecipeRepository
     {
         private readonly IMongoCollection<Recipes> _recipesCollection;
         private readonly IMongoCollection<Users> _usersCollection;
@@ -176,6 +177,20 @@ namespace MenuApp.DAL.Repositories
                 .AsQueryable()
                 .Where(r => r.Id == recipeId)
                 .FirstOrDefaultAsync();
+        }
+
+        public async Task<List<RecipeWithUserModel>> GetRecipesBySearch(string query)
+        {
+            return await _recipesCollection
+                .Aggregate()
+                .Lookup<Recipes, Users, RecipeWithUserModel>(
+                    foreignCollection: _usersCollection,
+                    localField: rec => rec.CreatorId,
+                    foreignField: u => u.Id,
+                    @as: ram => ram.User
+                )
+                .Match(ram => ram.Name.Contains(query))
+                .ToListAsync();
         }
     }
 }
