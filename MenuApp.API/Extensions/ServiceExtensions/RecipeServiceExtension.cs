@@ -1,5 +1,4 @@
 ﻿using MenuApp.BLL.Services.RecipeService;
-using MenuApp.BLL.Services.SubscriptionService;
 using MenuApp.DAL.Repositories;
 
 namespace MenuApp.API.Extensions.ServiceExtensions

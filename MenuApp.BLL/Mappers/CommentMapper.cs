@@ -21,7 +21,6 @@ namespace MenuApp.BLL.Mappers
                 Comment = commentWithUser.Comment,
                 CreatedAt = commentWithUser.CreatedAt,
                 User = mapper.Map<Users, UserDTO>(commentWithUser.User),
-                RecipeId = commentWithUser.RecipeId.ToString(),
                 IsOwner = commentWithUser.CommentorId == userId,
             };
         }

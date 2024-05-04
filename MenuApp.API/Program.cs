@@ -52,6 +52,7 @@ builder.Services.AddConfirmationCodesService();
 builder.Services.AddCommentService();
 builder.Services.AddSubscriptionService();
 builder.Services.AddRecipeService();
+builder.Services.AddSearchService();
 
 builder.Services.AddHttpContextAccessor();
 

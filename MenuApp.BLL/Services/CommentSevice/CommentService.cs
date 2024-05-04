@@ -148,7 +148,7 @@ namespace MenuApp.BLL.Services.CommentSevice
             {
                 await _commentsRepository.UpdateComment(
                     ObjectId.Parse(updateComment.CommentId),
-                    updateComment.CommentId
+                    updateComment.Comment
                 );
 
                 _logger.LogInformation($"Comment {updateComment.CommentId} succesfully updated");

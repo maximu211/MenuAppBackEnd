@@ -70,9 +70,9 @@ namespace MenuApp.API.Controllers
         }
 
         [HttpPut("update_recipe")]
-        public async Task<IActionResult> UpdateRecipe(RecipeDTO recipe)
+        public async Task<IActionResult> UpdateRecipe(string recipeId, RecipeDTO recipe)
         {
-            var result = await _recipeService.UpdateRecipe(recipe);
+            var result = await _recipeService.UpdateRecipe(recipeId, recipe);
             if (result.Success)
                 return Ok(result);
             else
@@ -112,14 +112,14 @@ namespace MenuApp.API.Controllers
         [HttpPost("delete_from_saved_recipe/{recipeId}")]
         public async Task<IActionResult> DeleteFromSavedRecipe(string recipeId)
         {
-            var result = await _recipeService.DislikeRecipe(recipeId);
+            var result = await _recipeService.DeleteFromSavedRecipe(recipeId);
             if (result.Success)
                 return Ok(result);
             else
                 return BadRequest(result.Message);
         }
 
-        [HttpPost("get_recipe_details/{recipeId}")]
+        [HttpGet("get_recipe_details/{recipeId}")]
         public async Task<IActionResult> GetRecipeDetails(string recipeId)
         {
             var result = await _recipeService.GetRecipeDetails(recipeId);

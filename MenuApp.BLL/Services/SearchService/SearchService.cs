@@ -13,7 +13,7 @@ namespace MenuApp.BLL.Services.SearchService
 {
     public interface ISearchService
     {
-        Task<ServiceResult> GetSearchResultByQuery(string query);
+        Task<SearchServiceResult> GetSearchResultByQuery(string query);
     }
 
     public class SearchService : ISearchService
@@ -43,7 +43,7 @@ namespace MenuApp.BLL.Services.SearchService
             _jwtGenerator = jwtGenerator;
         }
 
-        public async Task<ServiceResult> GetSearchResultByQuery(string query)
+        public async Task<SearchServiceResult> GetSearchResultByQuery(string query)
         {
             try
             {
@@ -57,32 +57,39 @@ namespace MenuApp.BLL.Services.SearchService
 
                 ObjectId userId = _jwtGenerator.GetUserIdFromJwtToken(userIdClaim.Value);
 
-                var getUsersTask = _userRepository.GetUsersBySearch(query);
-                var getRecipesTask = _recipeRepository.GetRecipesBySearch(query);
+                // Очікуємо завершення обох завдань
+                var getUsersResultTask = _userRepository
+                    .GetUsersBySearch(query)
+                    .ContinueWith(task =>
+                        task.Result.Select(user => _mapper.Map<Users, UserDTO>(user)).ToList()
+                    );
 
-                await Task.WhenAll(getUsersTask, getRecipesTask);
+                var getRecipesResultTask = _recipeRepository
+                    .GetRecipesBySearch(query)
+                    .ContinueWith(task =>
+                        task.Result.Select(recipe =>
+                            CardRecipeMapper.MapToCardRecipeDTO(recipe, userId, _mapper)
+                        )
+                            .ToList()
+                    );
 
-                var getUsersResult = getUsersTask
-                    .Result.Select(user => _mapper.Map<Users, UserDTO>(user))
-                    .ToList();
+                await Task.WhenAll(getUsersResultTask, getRecipesResultTask);
 
-                var getRecipesResult = getRecipesTask
-                    .Result.Select(recipe =>
-                        CardRecipeMapper.MapToCardRecipeDTO(recipe, userId, _mapper)
-                    )
-                    .ToList();
+                var getUsersResult = getUsersResultTask.Result;
+                var getRecipesResult = getRecipesResultTask.Result;
 
                 _logger.LogInformation($"user {userId} successfuly get data by query {query}");
-                return new ServiceResult(
+                return new SearchServiceResult(
                     true,
                     "Search successful",
-                    (getUsersResult, getRecipesResult)
+                    getRecipesResult,
+                    getUsersResult
                 );
             }
             catch (Exception ex)
             {
                 _logger.LogError($"An error ocurred while searching by query {query}: {ex}");
-                return new ServiceResult(false, "An error ocurred while searching");
+                return new SearchServiceResult(false, "An error ocurred while searching");
             }
         }
     }

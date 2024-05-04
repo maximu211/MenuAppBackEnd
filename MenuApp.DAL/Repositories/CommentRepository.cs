@@ -44,7 +44,9 @@ namespace MenuApp.DAL.Repositories
                     foreignField: user => user.Id,
                     @as: cwu => cwu.User
                 )
-                .SortByDescending(cwu => cwu.CommentorId == userId)
+                .SortByDescending(cwu => cwu.CreatedAt)
+                .ThenByDescending(cwu => cwu.IsUserComment)
+                .Unwind<CommentWithUserModel, CommentWithUserModel>(rwu => rwu.User)
                 .ToListAsync();
         }
 

@@ -10,5 +10,6 @@ namespace MenuApp.DAL.Models.AggregetionModels
     public class CommentWithUserModel : Comments
     {
         public required Users User { get; set; }
+        public bool IsUserComment { get; set; }
     }
 }

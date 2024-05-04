@@ -49,23 +49,17 @@ namespace MenuApp.DAL.Repositories
         public async Task DeleteFromSavedRecipe(ObjectId userId, ObjectId recipeId)
         {
             var filter = Builders<Recipes>.Filter.Eq(r => r.Id, recipeId);
-            var update = Builders<Recipes>.Update.PullFilter(
-                r => r.Saved,
-                Builders<ObjectId>.Filter.Eq(savedUserId => savedUserId, userId)
-            );
+            var update = Builders<Recipes>.Update.Pull(r => r.Saved, userId);
 
-            await _recipesCollection.UpdateOneAsync(filter, update);
+            var result = await _recipesCollection.UpdateOneAsync(filter, update);
         }
 
         public async Task DislikeRecipe(ObjectId userId, ObjectId recipeId)
         {
             var filter = Builders<Recipes>.Filter.Eq(r => r.Id, recipeId);
-            var update = Builders<Recipes>.Update.PullFilter(
-                r => r.Likes,
-                Builders<ObjectId>.Filter.Eq(savedUserId => savedUserId, userId)
-            );
+            var update = Builders<Recipes>.Update.Pull(r => r.Likes, userId);
 
-            await _recipesCollection.UpdateOneAsync(filter, update);
+            var result = await _recipesCollection.UpdateOneAsync(filter, update);
         }
 
         public async Task<List<RecipeWithUserModel>> GetRecipesByUserId(ObjectId userId)
@@ -76,10 +70,11 @@ namespace MenuApp.DAL.Repositories
                     foreignCollection: _usersCollection,
                     localField: rec => rec.CreatorId,
                     foreignField: u => u.Id,
-                    @as: ram => ram.User
+                    @as: rwu => rwu.User
                 )
-                .Match(r => r.CreatorId == userId)
-                .SortByDescending(r => r.CreatedAt)
+                .Unwind<RecipeWithUserModel, RecipeWithUserModel>(rwu => rwu.User)
+                .Match(rwu => rwu.CreatorId == userId)
+                .SortByDescending(rwu => rwu.CreatedAt)
                 .ToListAsync();
 
             return RecipeList;
@@ -105,7 +100,9 @@ namespace MenuApp.DAL.Repositories
                         foreignField: user => user.Id,
                         @as: (RecipeWithUserModel recipeWithUser) => recipeWithUser.User
                     )
+                    .Unwind<RecipeWithUserModel, RecipeWithUserModel>(rwu => rwu.User)
                     .Match(recipe => subscribedUserIds.Contains(recipe.User.Id))
+                    .SortByDescending(rwu => rwu.CreatedAt)
                     .ToListAsync();
 
                 return pipeline;
@@ -114,36 +111,18 @@ namespace MenuApp.DAL.Repositories
 
         public async Task LikeRecipe(ObjectId userId, ObjectId recipeId)
         {
-            var filter = Builders<Recipes>.Filter.And(
-                Builders<Recipes>.Filter.Eq(r => r.Id, recipeId),
-                Builders<Recipes>.Filter.Not(
-                    Builders<Recipes>.Filter.ElemMatch(
-                        r => r.Likes,
-                        savedUserId => savedUserId == userId
-                    )
-                )
-            );
-
+            var filter = Builders<Recipes>.Filter.Eq(r => r.Id, recipeId);
             var update = Builders<Recipes>.Update.AddToSet(r => r.Likes, userId);
 
-            await _recipesCollection.UpdateOneAsync(filter, update);
+            var result = await _recipesCollection.UpdateOneAsync(filter, update);
         }
 
         public async Task SaveRecipe(ObjectId userId, ObjectId recipeId)
         {
-            var filter = Builders<Recipes>.Filter.And(
-                Builders<Recipes>.Filter.Eq(r => r.Id, recipeId),
-                Builders<Recipes>.Filter.Not(
-                    Builders<Recipes>.Filter.ElemMatch(
-                        r => r.Saved,
-                        savedUserId => savedUserId == userId
-                    )
-                )
-            );
-
+            var filter = Builders<Recipes>.Filter.Eq(r => r.Id, recipeId);
             var update = Builders<Recipes>.Update.AddToSet(r => r.Saved, userId);
 
-            await _recipesCollection.UpdateOneAsync(filter, update);
+            var result = await _recipesCollection.UpdateOneAsync(filter, update);
         }
 
         public async Task UpdateRecipe(Recipes recipe)
@@ -164,6 +143,7 @@ namespace MenuApp.DAL.Repositories
                     foreignField: u => u.Id,
                     @as: ram => ram.User
                 )
+                .Unwind<RecipeWithUserModel, RecipeWithUserModel>(rwu => rwu.User)
                 .Match(r => r.Saved.Contains(userId))
                 .SortByDescending(r => r.CreatedAt)
                 .ToListAsync();
@@ -189,7 +169,9 @@ namespace MenuApp.DAL.Repositories
                     foreignField: u => u.Id,
                     @as: ram => ram.User
                 )
+                .Unwind<RecipeWithUserModel, RecipeWithUserModel>(rwu => rwu.User)
                 .Match(ram => ram.Name.Contains(query))
+                .SortByDescending(r => r.CreatedAt)
                 .ToListAsync();
         }
     }

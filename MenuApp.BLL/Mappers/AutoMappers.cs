@@ -16,11 +16,6 @@ namespace MenuApp.BLL.Mappers
                 .ForMember(dest => dest.Image, opt => opt.MapFrom(src => src.Image));
 
             CreateMap<RecipeDTO, Recipes>()
-                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => ObjectId.Parse(src.Id)))
-                .ForMember(
-                    dest => dest.CreatorId,
-                    opt => opt.MapFrom(src => ObjectId.Parse(src.CreatorId))
-                )
                 .ForMember(
                     dest => dest.CookingDifficulty,
                     opt => opt.MapFrom(src => src.CookingDifficulty)

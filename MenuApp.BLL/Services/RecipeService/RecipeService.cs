@@ -18,7 +18,7 @@ namespace MenuApp.BLL.Services.RecipeService
         Task<ServiceResult> GetRecipesBySubscriptions();
         Task<ServiceResult> GetUserSavedRecipes();
         Task<ServiceResult> DeleteRecipe(string recipeId);
-        Task<ServiceResult> UpdateRecipe(RecipeDTO recipe);
+        Task<ServiceResult> UpdateRecipe(string recipeId, RecipeDTO recipe);
         Task<ServiceResult> AddRecipe(RecipeDTO recipe);
         Task<ServiceResult> LikeRecipe(string recipeId);
         Task<ServiceResult> SaveRecipe(string recipeId);
@@ -51,7 +51,7 @@ namespace MenuApp.BLL.Services.RecipeService
             _mapper = mapper;
         }
 
-        public async Task<ServiceResult> AddRecipe(RecipeDTO recipe)
+        public async Task<ServiceResult> AddRecipe(RecipeDTO recipeDto)
         {
             try
             {
@@ -63,7 +63,19 @@ namespace MenuApp.BLL.Services.RecipeService
                     throw new Exception("userId claim is missing in the token");
                 }
 
-                recipe.CreatorId = userIdClaim.Value;
+                ObjectId userId = _jwtGenerator.GetUserIdFromJwtToken(userIdClaim.Value);
+
+                Recipes recipe = new Recipes
+                {
+                    Name = recipeDto.Name,
+                    ReceipeImage = recipeDto.Image,
+                    RecipeDescriptionElements = recipeDto.RecipeDescriptionElements,
+                    RecipeIngradients = recipeDto.RecipeIngradients,
+                    RecipeType = recipeDto.RecipeType,
+                    CookingDifficulty = recipeDto.CookingDifficulty,
+                    CookTime = recipeDto.CookTime,
+                    CreatorId = userId,
+                };
 
                 await _recipesRepository.AddRecipe(_mapper.Map<Recipes>(recipe));
 
@@ -111,12 +123,26 @@ namespace MenuApp.BLL.Services.RecipeService
         {
             try
             {
+                var userIdClaim = _httpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(c =>
+                    c.Type == "userId"
+                );
+                if (userIdClaim == null)
+                {
+                    throw new Exception("userId claim is missing in the token");
+                }
+
+                ObjectId userIdRequests = _jwtGenerator.GetUserIdFromJwtToken(userIdClaim.Value);
+
                 var recipeList = await _recipesRepository.GetRecipesByUserId(
                     ObjectId.Parse(userId)
                 );
 
+                var recipeListMapped = recipeList
+                    .Select(r => CardRecipeMapper.MapToCardRecipeDTO(r, userIdRequests, _mapper))
+                    .ToList();
+
                 _logger.LogInformation($"Data successfuly sended by userid: {userId}");
-                return new ServiceResult(true, "Recipe List succesfuly sended", recipeList);
+                return new ServiceResult(true, "Recipe List succesfuly sended", recipeListMapped);
             }
             catch (Exception ex)
             {
@@ -158,7 +184,7 @@ namespace MenuApp.BLL.Services.RecipeService
             }
         }
 
-        public async Task<ServiceResult> UpdateRecipe(RecipeDTO recipeDTO)
+        public async Task<ServiceResult> UpdateRecipe(string recipeId, RecipeDTO recipeDto)
         {
             try
             {
@@ -170,12 +196,7 @@ namespace MenuApp.BLL.Services.RecipeService
 
                 ObjectId userId = _jwtGenerator.GetUserIdFromJwtToken(userIdClaim.Value);
 
-                if (ObjectId.Parse(recipeDTO.CreatorId) != userId)
-                    throw new Exception(
-                        $"User {userId} is not creator of recipe {recipeDTO.CreatorId}"
-                    );
-
-                var recipe = _mapper.Map<RecipeDTO, Recipes>(recipeDTO);
+                var recipe = _mapper.Map<RecipeDTO, Recipes>(recipeDto);
                 await _recipesRepository.UpdateRecipe(recipe);
                 return new ServiceResult(true, "Recipe successfuly updated");
             }
@@ -296,15 +317,20 @@ namespace MenuApp.BLL.Services.RecipeService
 
                 ObjectId userId = _jwtGenerator.GetUserIdFromJwtToken(userIdClaim.Value);
 
-                await _recipesRepository.SaveRecipe(userId, ObjectId.Parse(recipeId));
+                await _recipesRepository.DeleteFromSavedRecipe(userId, ObjectId.Parse(recipeId));
 
-                _logger.LogInformation($"User {userId} successfuly save recipe {recipeId}");
-                return new ServiceResult(true, "Recipe successfuly saved");
+                _logger.LogInformation(
+                    $"User {userId} successfuly save delete from saved recipe {recipeId}"
+                );
+                return new ServiceResult(true, "Recipe successfuly deleted from saved recipe");
             }
             catch (Exception ex)
             {
-                _logger.LogWarning($"An error occurred while saving recipe {ex}");
-                return new ServiceResult(false, "An error occurred while saving recipe");
+                _logger.LogWarning($"An error occurred while deleting from saved recipe {ex}");
+                return new ServiceResult(
+                    false,
+                    "An error occurred while deleting from saved recipe"
+                );
             }
         }
 
