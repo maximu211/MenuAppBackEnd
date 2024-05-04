@@ -25,6 +25,7 @@ namespace MenuApp.BLL.Services.RecipeService
         Task<ServiceResult> DislikeRecipe(string recipeId);
         Task<ServiceResult> DeleteFromSavedRecipe(string recipeId);
         Task<ServiceResult> GetRecipeDetails(string recipeId);
+        Task<ServiceResult> GetRecipeById(string recipeId);
     }
 
     public class RecipeService : IRecipeService
@@ -68,7 +69,7 @@ namespace MenuApp.BLL.Services.RecipeService
                 Recipes recipe = new Recipes
                 {
                     Name = recipeDto.Name,
-                    ReceipeImage = recipeDto.Image,
+                    RecipeImage = recipeDto.Image,
                     RecipeDescriptionElements = recipeDto.RecipeDescriptionElements,
                     RecipeIngradients = recipeDto.RecipeIngradients,
                     RecipeType = recipeDto.RecipeType,
@@ -196,8 +197,10 @@ namespace MenuApp.BLL.Services.RecipeService
 
                 ObjectId userId = _jwtGenerator.GetUserIdFromJwtToken(userIdClaim.Value);
 
-                var recipe = _mapper.Map<RecipeDTO, Recipes>(recipeDto);
+                var recipe = RecipeMapper.MapRecipeDTOToRecipe(recipeDto, ObjectId.Parse(recipeId));
                 await _recipesRepository.UpdateRecipe(recipe);
+
+                _logger.LogInformation($"Recipe {recipeId} successfuly updated by user {userId}");
                 return new ServiceResult(true, "Recipe successfuly updated");
             }
             catch (Exception ex)
@@ -349,6 +352,22 @@ namespace MenuApp.BLL.Services.RecipeService
             {
                 _logger.LogInformation($"An error occurred while saving recipe {ex}");
                 return new ServiceResult(false, "An error occurred while sending recipe details");
+            }
+        }
+
+        public async Task<ServiceResult> GetRecipeById(string recipeId)
+        {
+            try
+            {
+                var recipe = await _recipesRepository.GetRecipeById(ObjectId.Parse(recipeId));
+
+                _logger.LogInformation($"Recipe {recipeId} successfuly sended");
+                return new ServiceResult(true, "Recipe successfuly sended", recipe);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"An Error occured while sending recipe {recipeId}: {ex}");
+                return new ServiceResult(false, "An Error occured while sending recipe");
             }
         }
     }

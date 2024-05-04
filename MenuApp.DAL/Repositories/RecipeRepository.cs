@@ -125,12 +125,19 @@ namespace MenuApp.DAL.Repositories
             var result = await _recipesCollection.UpdateOneAsync(filter, update);
         }
 
-        public async Task UpdateRecipe(Recipes recipe)
+        public async Task UpdateRecipe(Recipes updatedRecipe)
         {
-            var filter = Builders<Recipes>.Filter.Eq(r => r.Id, recipe.Id);
-            var options = new ReplaceOptions { IsUpsert = false };
+            var filter = Builders<Recipes>.Filter.Eq(r => r.Id, updatedRecipe.Id);
+            var update = Builders<Recipes>
+                .Update.Set(r => r.Name, updatedRecipe.Name)
+                .Set(r => r.RecipeIngradients, updatedRecipe.RecipeIngradients)
+                .Set(r => r.CookingDifficulty, updatedRecipe.CookingDifficulty)
+                .Set(r => r.CookTime, updatedRecipe.CookTime)
+                .Set(r => r.RecipeImage, updatedRecipe.RecipeImage)
+                .Set(r => r.RecipeDescriptionElements, updatedRecipe.RecipeDescriptionElements)
+                .Set(r => r.RecipeType, updatedRecipe.RecipeType);
 
-            await _recipesCollection.ReplaceOneAsync(filter, recipe, options);
+            await _recipesCollection.UpdateOneAsync(filter, update);
         }
 
         public async Task<List<RecipeWithUserModel>> GetSavedRecipesByUserid(ObjectId userId)

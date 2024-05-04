@@ -18,7 +18,7 @@ namespace MenuApp.BLL.Mappers
             return new CardRecipeDTO
             {
                 Id = recipeWithUser.Id.ToString(),
-                RecipePhoto = recipeWithUser.ReceipeImage,
+                RecipePhoto = recipeWithUser.RecipeImage,
                 User = mapper.Map<Users, UserDTO>(recipeWithUser.User),
                 Name = recipeWithUser.Name,
                 CookingDifficulty = recipeWithUser.CookingDifficulty,

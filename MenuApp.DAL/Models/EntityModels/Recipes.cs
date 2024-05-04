@@ -11,7 +11,7 @@ namespace MenuApp.DAL.Models.EntityModels
         public CookingTime CookTime { get; set; }
         public CookingDifficulty CookingDifficulty { get; set; }
         public required string RecipeType { get; set; }
-        public required string ReceipeImage { get; set; }
+        public required string RecipeImage { get; set; }
         public List<ObjectId> Likes { get; set; } = new List<ObjectId>();
         public List<ObjectId> Saved { get; set; } = new List<ObjectId>();
         public required List<RecipeDescriptionElement> RecipeDescriptionElements { get; set; }

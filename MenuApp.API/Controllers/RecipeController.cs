@@ -128,5 +128,15 @@ namespace MenuApp.API.Controllers
             else
                 return BadRequest(result.Message);
         }
+
+        [HttpGet("get_recipe_by_id/{recipeId}")]
+        public async Task<IActionResult> GetRecipeById(string recipeId)
+        {
+            var result = await _recipeService.GetRecipeById(recipeId);
+            if (result.Success)
+                return Ok(result);
+            else
+                return BadRequest(result.Message);
+        }
     }
 }
