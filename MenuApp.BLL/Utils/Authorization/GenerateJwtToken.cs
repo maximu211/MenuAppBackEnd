@@ -42,7 +42,7 @@ namespace MenuApp.BLL.Utils.Authorization
                 issuer: _jwtSettings.Value.Issuer,
                 audience: _jwtSettings.Value.Audience,
                 claims: claims,
-                expires: DateTime.UtcNow.Add(TimeSpan.FromHours(2)),
+                expires: DateTime.UtcNow.Add(TimeSpan.FromHours(3)),
                 signingCredentials: new SigningCredentials(
                     new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Value.JwtKey)),
                     SecurityAlgorithms.HmacSha256

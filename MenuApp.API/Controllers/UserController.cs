@@ -40,7 +40,6 @@ namespace MenuApp.API.Controllers
                 return BadRequest(result.Message);
         }
 
-        [Authorize]
         [HttpPost("refresh_token")]
         public async Task<IActionResult> RefreshToken(RefreshTokenDTO refreshToken)
         {
@@ -70,7 +69,7 @@ namespace MenuApp.API.Controllers
             if (result.Success)
                 return Ok(result);
             else
-                return BadRequest(result.Message);
+                return BadRequest(new { Message = result.Message, Success = result.Success });
         }
 
         [Authorize]

@@ -13,7 +13,7 @@ namespace MenuApp.BLL.Services.SearchService
 {
     public interface ISearchService
     {
-        Task<SearchServiceResult> GetSearchResultByQuery(string query);
+        Task<ServiceResult> GetSearchResultByQuery(string query);
     }
 
     public class SearchService : ISearchService
@@ -43,7 +43,7 @@ namespace MenuApp.BLL.Services.SearchService
             _jwtGenerator = jwtGenerator;
         }
 
-        public async Task<SearchServiceResult> GetSearchResultByQuery(string query)
+        public async Task<ServiceResult> GetSearchResultByQuery(string query)
         {
             try
             {
@@ -57,7 +57,6 @@ namespace MenuApp.BLL.Services.SearchService
 
                 ObjectId userId = _jwtGenerator.GetUserIdFromJwtToken(userIdClaim.Value);
 
-                // Очікуємо завершення обох завдань
                 var getUsersResultTask = _userRepository
                     .GetUsersBySearch(query)
                     .ContinueWith(task =>
@@ -79,17 +78,16 @@ namespace MenuApp.BLL.Services.SearchService
                 var getRecipesResult = getRecipesResultTask.Result;
 
                 _logger.LogInformation($"user {userId} successfuly get data by query {query}");
-                return new SearchServiceResult(
+                return new ServiceResult(
                     true,
                     "Search successful",
-                    getRecipesResult,
-                    getUsersResult
+                    new { userList = getUsersResult, recipeList = getRecipesResult }
                 );
             }
             catch (Exception ex)
             {
                 _logger.LogError($"An error ocurred while searching by query {query}: {ex}");
-                return new SearchServiceResult(false, "An error ocurred while searching");
+                return new ServiceResult(false, "An error ocurred while searching");
             }
         }
     }

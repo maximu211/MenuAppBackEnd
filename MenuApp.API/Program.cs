@@ -24,6 +24,7 @@ builder
             ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
             ValidateAudience = true,
             ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero,
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:JwtKey"]!)
             ),

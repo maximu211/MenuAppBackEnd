@@ -357,7 +357,7 @@ namespace MenuApp.BLL.Services.UserService
                     return new ServiceResult(false, $"Error sending email: {ex.Message}");
                 }
 
-                var accesToken = _jwtTokenGenerator.GenerateNewJwtToken(user.Id.ToString());
+                var authToken = _jwtTokenGenerator.GenerateNewJwtToken(user.Id.ToString());
 
                 _logger.LogInformation(
                     "Verificcation code has been sent to user {userId}",
@@ -366,7 +366,7 @@ namespace MenuApp.BLL.Services.UserService
                 return new ServiceResult(
                     true,
                     "A confirmation code has been sent to your email",
-                    new { IsUserFound = true, AccesToken = accesToken }
+                    new { AuthToken = authToken }
                 );
             }
             catch (Exception ex)
@@ -377,7 +377,7 @@ namespace MenuApp.BLL.Services.UserService
                 );
                 return new ServiceResult(
                     false,
-                    $"An error occurred during sending verification code to recover password: {ex.Message}"
+                    $"An error occurred during sending verification code to recover password"
                 );
             }
         }
@@ -425,11 +425,7 @@ namespace MenuApp.BLL.Services.UserService
                         "Verification code for user {userId} has been verified",
                         userId
                     );
-                    return new ServiceResult(
-                        true,
-                        "User successfuly verified",
-                        new { UserVerified = true }
-                    );
+                    return new ServiceResult(true, "User successfuly verified");
                 }
                 else
                 {
@@ -437,11 +433,7 @@ namespace MenuApp.BLL.Services.UserService
                         "Verification code for user {userId} has not been verified",
                         userId
                     );
-                    return new ServiceResult(
-                        false,
-                        "No such code exists",
-                        new { UserVerified = false }
-                    );
+                    return new ServiceResult(false, "No such code exists");
                 }
             }
             catch (Exception ex)
@@ -527,7 +519,7 @@ namespace MenuApp.BLL.Services.UserService
 
                 await _userRepository.AddUser(newUser);
 
-                var accessToken = _jwtTokenGenerator.GenerateNewJwtToken(newUser.Id.ToString());
+                var authToken = _jwtTokenGenerator.GenerateNewJwtToken(newUser.Id.ToString());
 
                 string emailConfirmationCode = _emailSender.GenerateConfirmationCode();
 
@@ -566,7 +558,7 @@ namespace MenuApp.BLL.Services.UserService
                 return new ServiceResult(
                     true,
                     "A confirmation email has been sent to the user",
-                    new { AccessToken = accessToken, }
+                    new { AuthToken = authToken, }
                 );
             }
             catch (Exception ex)
