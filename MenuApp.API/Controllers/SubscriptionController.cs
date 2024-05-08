@@ -26,7 +26,7 @@ namespace MenuApp.API.Controllers
             if (result.Success)
                 return Ok(result);
             else
-                return BadRequest(result.Message);
+                return BadRequest(new { result.Message, result.Success });
         }
 
         [HttpPost("unsubscribe_from")]
@@ -36,7 +36,7 @@ namespace MenuApp.API.Controllers
             if (result.Success)
                 return Ok(result);
             else
-                return BadRequest(result.Message);
+                return BadRequest(new { result.Message, result.Success });
         }
 
         [HttpGet("get_subscribers")]
@@ -46,7 +46,7 @@ namespace MenuApp.API.Controllers
             if (result.Success)
                 return Ok(result);
             else
-                return BadRequest(result.Message);
+                return BadRequest(new { result.Message, result.Success });
         }
 
         [HttpGet("get_subscribed_users")]
@@ -56,7 +56,7 @@ namespace MenuApp.API.Controllers
             if (result.Success)
                 return Ok(result);
             else
-                return BadRequest(result.Message);
+                return BadRequest(new { result.Message, result.Success });
         }
     }
 }

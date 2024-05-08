@@ -723,10 +723,10 @@ namespace MenuApp.BLL.Services.UserService
 
                 var userId = _jwtTokenGenerator.GetUserIdFromJwtToken(userIdClaim.Value);
 
-                string photo = await _userRepository.GetUserImageByUserId(userId);
+                string userImage = await _userRepository.GetUserImageByUserId(userId);
 
                 _logger.LogInformation($"user {userId} succesfuly get profile photo");
-                return new ServiceResult(true, $"Profile photo successfuly setted", photo);
+                return new ServiceResult(true, $"Profile photo successfuly setted", userImage);
             }
             catch (Exception ex)
             {

@@ -12,14 +12,14 @@ namespace MenuApp.BLL.DTO.RecipesDTOs
     public class CardRecipeDTO
     {
         public required string Id { get; set; }
-        public required string RecipePhoto { get; set; }
+        public required string RecipeImage { get; set; }
         public required UserDTO User { get; set; }
         public required string Name { get; set; }
         public CookingDifficulty CookingDifficulty { get; set; }
         public CookingTime CookingTime { get; set; }
-        public required string ReceiptType { get; set; }
-        public bool IsDishSaved { get; set; }
-        public bool IsDishLiked { get; set; }
+        public required string RecipeType { get; set; }
+        public bool IsRecipeSaved { get; set; }
+        public bool IsRecipeLiked { get; set; }
         public int LikesCount { get; set; }
         public bool IsOwner { get; set; }
     }

@@ -18,14 +18,14 @@ namespace MenuApp.BLL.Mappers
             return new CardRecipeDTO
             {
                 Id = recipeWithUser.Id.ToString(),
-                RecipePhoto = recipeWithUser.RecipeImage,
+                RecipeImage = recipeWithUser.RecipeImage,
                 User = mapper.Map<Users, UserDTO>(recipeWithUser.User),
                 Name = recipeWithUser.Name,
                 CookingDifficulty = recipeWithUser.CookingDifficulty,
                 CookingTime = recipeWithUser.CookTime,
-                ReceiptType = recipeWithUser.RecipeType,
-                IsDishSaved = recipeWithUser.Saved.Contains(userId),
-                IsDishLiked = recipeWithUser.Likes.Contains(userId),
+                RecipeType = recipeWithUser.RecipeType,
+                IsRecipeSaved = recipeWithUser.Saved.Contains(userId),
+                IsRecipeLiked = recipeWithUser.Likes.Contains(userId),
                 LikesCount = recipeWithUser.Likes.Count,
                 IsOwner = recipeWithUser.CreatorId == userId
             };

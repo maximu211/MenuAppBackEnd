@@ -25,7 +25,7 @@ namespace MenuApp.API.Controllers
             if (result.Success)
                 return Ok(result);
             else
-                return BadRequest(result.Message);
+                return BadRequest(new { result.Message, result.Success });
         }
     }
 }

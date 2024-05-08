@@ -26,7 +26,7 @@ namespace MenuApp.API.Controllers
             if (result.Success == true)
                 return Ok(result);
             else
-                return BadRequest(result.Message);
+                return BadRequest(new { result.Message, result.Success });
         }
 
         [HttpGet("get_recipes_by_userId/{userId}")]
@@ -36,7 +36,7 @@ namespace MenuApp.API.Controllers
             if (result.Success == true)
                 return Ok(result);
             else
-                return BadRequest(result.Message);
+                return BadRequest(new { result.Message, result.Success });
         }
 
         [HttpGet("get_recipes_by_subscriptions")]
@@ -46,7 +46,7 @@ namespace MenuApp.API.Controllers
             if (result.Success == true)
                 return Ok(result);
             else
-                return BadRequest(result.Message);
+                return BadRequest(new { result.Message, result.Success });
         }
 
         [HttpGet("get_user_saved_recipes")]
@@ -56,7 +56,7 @@ namespace MenuApp.API.Controllers
             if (result.Success == true)
                 return Ok(result);
             else
-                return BadRequest(result.Message);
+                return BadRequest(new { result.Message, result.Success });
         }
 
         [HttpDelete("delete_recipe/{recipeId}")]
@@ -66,7 +66,7 @@ namespace MenuApp.API.Controllers
             if (result.Success == true)
                 return Ok(result);
             else
-                return BadRequest(result.Message);
+                return BadRequest(new { result.Message, result.Success });
         }
 
         [HttpPut("update_recipe")]
@@ -76,7 +76,7 @@ namespace MenuApp.API.Controllers
             if (result.Success)
                 return Ok(result);
             else
-                return BadRequest(result.Message);
+                return BadRequest(new { result.Message, result.Success });
         }
 
         [HttpPost("like_recipe/{recipeId}")]
@@ -86,7 +86,7 @@ namespace MenuApp.API.Controllers
             if (result.Success)
                 return Ok(result);
             else
-                return BadRequest(result.Message);
+                return BadRequest(new { result.Message, result.Success });
         }
 
         [HttpPost("save_recipe/{recipeId}")]
@@ -96,7 +96,7 @@ namespace MenuApp.API.Controllers
             if (result.Success)
                 return Ok(result);
             else
-                return BadRequest(result.Message);
+                return BadRequest(new { result.Message, result.Success });
         }
 
         [HttpPost("dislike_recipe/{recipeId}")]
@@ -106,7 +106,7 @@ namespace MenuApp.API.Controllers
             if (result.Success)
                 return Ok(result);
             else
-                return BadRequest(result.Message);
+                return BadRequest(new { result.Message, result.Success });
         }
 
         [HttpPost("delete_from_saved_recipe/{recipeId}")]
@@ -116,7 +116,7 @@ namespace MenuApp.API.Controllers
             if (result.Success)
                 return Ok(result);
             else
-                return BadRequest(result.Message);
+                return BadRequest(new { result.Message, result.Success });
         }
 
         [HttpGet("get_recipe_details/{recipeId}")]
@@ -126,7 +126,7 @@ namespace MenuApp.API.Controllers
             if (result.Success)
                 return Ok(result);
             else
-                return BadRequest(result.Message);
+                return BadRequest(new { result.Message, result.Success });
         }
 
         [HttpGet("get_recipe_by_id/{recipeId}")]
@@ -136,7 +136,7 @@ namespace MenuApp.API.Controllers
             if (result.Success)
                 return Ok(result);
             else
-                return BadRequest(result.Message);
+                return BadRequest(new { result.Message, result.Success });
         }
     }
 }

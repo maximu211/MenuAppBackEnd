@@ -72,11 +72,7 @@ namespace MenuApp.BLL.Services.SubscriptionService
                 return new ServiceResult(
                     true,
                     "List succesfully sended",
-                    new
-                    {
-                        SubscribedUsers = subscribedUsersList,
-                        Count = subscribedUsersList.Count()
-                    }
+                    new { Subscribers = subscribedUsersList, }
                 );
             }
             catch (Exception ex)
@@ -108,7 +104,7 @@ namespace MenuApp.BLL.Services.SubscriptionService
                 return new ServiceResult(
                     true,
                     "List succesfully sended",
-                    new { Subscribers = subscribersDTOList, Count = subscribersDTOList.Count() }
+                    new { Subscribers = subscribersDTOList }
                 );
             }
             catch (Exception ex)

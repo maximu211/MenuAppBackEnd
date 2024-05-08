@@ -26,7 +26,7 @@ namespace MenuApp.API.Controllers
             if (result.Success)
                 return Ok(result);
             else
-                return BadRequest(result.Message);
+                return BadRequest(new { result.Message, result.Success });
         }
 
         [HttpGet("get_comments_by_recipeId/{recipeId}")]
@@ -36,7 +36,7 @@ namespace MenuApp.API.Controllers
             if (result.Success)
                 return Ok(result);
             else
-                return BadRequest(result.Message);
+                return BadRequest(new { result.Message, result.Success });
         }
 
         [HttpDelete("delete_comment/{commentId}")]
@@ -46,7 +46,7 @@ namespace MenuApp.API.Controllers
             if (result.Success)
                 return Ok(result);
             else
-                return BadRequest(result.Message);
+                return BadRequest(new { result.Message, result.Success });
         }
 
         [HttpPatch("update_comment")]
@@ -56,7 +56,7 @@ namespace MenuApp.API.Controllers
             if (result.Success)
                 return Ok(result);
             else
-                return BadRequest(result.Message);
+                return BadRequest(new { result.Message, result.Success });
         }
     }
 }

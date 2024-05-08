@@ -25,7 +25,7 @@ namespace MenuApp.API.Controllers
             if (result.Success)
                 return Ok(result);
             else
-                return BadRequest(result.Message);
+                return BadRequest(new { result.Message, result.Success });
         }
 
         [HttpPost("register_email")]
@@ -37,7 +37,7 @@ namespace MenuApp.API.Controllers
             if (result.Success)
                 return Ok(result);
             else
-                return BadRequest(result.Message);
+                return BadRequest(new { result.Message, result.Success });
         }
 
         [HttpPost("refresh_token")]
@@ -47,7 +47,7 @@ namespace MenuApp.API.Controllers
             if (result.Success)
                 return Ok(result);
             else
-                return BadRequest(result.Message);
+                return BadRequest(new { result.Message, result.Success });
         }
 
         [AllowAnonymous]
@@ -59,7 +59,7 @@ namespace MenuApp.API.Controllers
             if (result.Success)
                 return Ok(result);
             else
-                return BadRequest(result.Message);
+                return BadRequest(new { result.Message, result.Success });
         }
 
         [HttpPost("log_in")]
@@ -80,7 +80,7 @@ namespace MenuApp.API.Controllers
             if (result.Success)
                 return Ok(result);
             else
-                return BadRequest(result.Message);
+                return BadRequest(new { result.Message, result.Success });
         }
 
         [Authorize]
@@ -95,7 +95,7 @@ namespace MenuApp.API.Controllers
             if (result.Success)
                 return Ok(result);
             else
-                return BadRequest(result.Message);
+                return BadRequest(new { result.Message, result.Success });
         }
 
         [Authorize]
@@ -108,7 +108,7 @@ namespace MenuApp.API.Controllers
             if (result.Success)
                 return Ok(result);
             else
-                return BadRequest(result.Message);
+                return BadRequest(new { result.Message, result.Success });
         }
 
         [Authorize]
@@ -119,7 +119,7 @@ namespace MenuApp.API.Controllers
             if (result.Success)
                 return Ok(result);
             else
-                return BadRequest(result.Message);
+                return BadRequest(new { result.Message, result.Success });
         }
 
         [Authorize]
@@ -132,7 +132,7 @@ namespace MenuApp.API.Controllers
             if (result.Success)
                 return Ok(result);
             else
-                return BadRequest(result.Message);
+                return BadRequest(new { result.Message, result.Success });
         }
 
         [Authorize]
@@ -143,7 +143,7 @@ namespace MenuApp.API.Controllers
             if (result.Success)
                 return Ok(result);
             else
-                return BadRequest(result.Message);
+                return BadRequest(new { result.Message, result.Success });
         }
 
         [Authorize]
@@ -154,7 +154,7 @@ namespace MenuApp.API.Controllers
             if (result.Success)
                 return Ok(result);
             else
-                return BadRequest(result.Message);
+                return BadRequest(new { result.Message, result.Success });
         }
 
         [Authorize]
@@ -165,7 +165,7 @@ namespace MenuApp.API.Controllers
             if (result.Success)
                 return Ok(result);
             else
-                return BadRequest(result.Message);
+                return BadRequest(new { result.Message, result.Success });
         }
     }
 }
