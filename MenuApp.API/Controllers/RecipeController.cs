@@ -69,7 +69,7 @@ namespace MenuApp.API.Controllers
                 return BadRequest(new { result.Message, result.Success });
         }
 
-        [HttpPut("update_recipe")]
+        [HttpPut("update_recipe/{recipeId}")]
         public async Task<IActionResult> UpdateRecipe(string recipeId, RecipeDTO recipe)
         {
             var result = await _recipeService.UpdateRecipe(recipeId, recipe);
@@ -109,7 +109,7 @@ namespace MenuApp.API.Controllers
                 return BadRequest(new { result.Message, result.Success });
         }
 
-        [HttpPost("delete_from_saved_recipe/{recipeId}")]
+        [HttpPost("delete_recipe_from_saved/{recipeId}")]
         public async Task<IActionResult> DeleteFromSavedRecipe(string recipeId)
         {
             var result = await _recipeService.DeleteFromSavedRecipe(recipeId);

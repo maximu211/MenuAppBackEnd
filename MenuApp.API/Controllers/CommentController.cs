@@ -19,10 +19,10 @@ namespace MenuApp.API.Controllers
             _commentService = commentService;
         }
 
-        [HttpPost("leave_comment")]
-        public async Task<IActionResult> LeaveComment(LeaveCommentDTO comment)
+        [HttpPost("leave_comment/{recipeId}")]
+        public async Task<IActionResult> LeaveComment(string recipeId, string commentText)
         {
-            var result = await _commentService.LeaveComment(comment);
+            var result = await _commentService.LeaveComment(recipeId, commentText);
             if (result.Success)
                 return Ok(result);
             else
@@ -49,10 +49,10 @@ namespace MenuApp.API.Controllers
                 return BadRequest(new { result.Message, result.Success });
         }
 
-        [HttpPatch("update_comment")]
-        public async Task<IActionResult> UpdateComment(UpdateCommentDTO updateComment)
+        [HttpPatch("update_comment/{commentId}")]
+        public async Task<IActionResult> UpdateComment(string commentId, string comment)
         {
-            var result = await _commentService.UpdateComment(updateComment);
+            var result = await _commentService.UpdateComment(commentId, comment);
             if (result.Success)
                 return Ok(result);
             else

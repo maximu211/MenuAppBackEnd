@@ -21,10 +21,10 @@ namespace MenuApp.BLL.Services.CommentSevice
 {
     public interface ICommentSevice
     {
-        Task<ServiceResult> LeaveComment(LeaveCommentDTO comment);
+        Task<ServiceResult> LeaveComment(string recipeId, string commentText);
         Task<ServiceResult> GetCommentsByRecipeId(string recipeId);
         Task<ServiceResult> DeleteComment(string commentId);
-        Task<ServiceResult> UpdateComment(UpdateCommentDTO updateComment);
+        Task<ServiceResult> UpdateComment(string commentId, string comment);
     }
 
     public class CommentService : ICommentSevice
@@ -105,7 +105,7 @@ namespace MenuApp.BLL.Services.CommentSevice
             }
         }
 
-        public async Task<ServiceResult> LeaveComment(LeaveCommentDTO commentDto)
+        public async Task<ServiceResult> LeaveComment(string recipeId, string commentText)
         {
             try
             {
@@ -121,14 +121,12 @@ namespace MenuApp.BLL.Services.CommentSevice
 
                 Comments comment = new Comments
                 {
-                    Comment = commentDto.Comment,
+                    Comment = commentText,
                     CommentorId = userId,
-                    RecipeId = ObjectId.Parse(commentDto.RecipeId),
+                    RecipeId = ObjectId.Parse(recipeId),
                 };
 
-                _logger.LogInformation(
-                    $"User {userId} leave comment to recipe {commentDto.RecipeId}"
-                );
+                _logger.LogInformation($"User {userId} leave comment to recipe {recipeId}");
                 await _commentsRepository.LeaveComment(comment);
 
                 return new ServiceResult(true, "Comment successfuly leaved");
@@ -136,29 +134,24 @@ namespace MenuApp.BLL.Services.CommentSevice
             catch (Exception ex)
             {
                 _logger.LogError(
-                    $"An error ocured while leaving comment to recipe: {commentDto.RecipeId}: {ex}"
+                    $"An error ocured while leaving comment to recipe: {recipeId}: {ex}"
                 );
                 return new ServiceResult(false, "An error ocured while leaving comment to recipe");
             }
         }
 
-        public async Task<ServiceResult> UpdateComment(UpdateCommentDTO updateComment)
+        public async Task<ServiceResult> UpdateComment(string commentId, string comment)
         {
             try
             {
-                await _commentsRepository.UpdateComment(
-                    ObjectId.Parse(updateComment.CommentId),
-                    updateComment.Comment
-                );
+                await _commentsRepository.UpdateComment(ObjectId.Parse(commentId), comment);
 
-                _logger.LogInformation($"Comment {updateComment.CommentId} succesfully updated");
+                _logger.LogInformation($"Comment {commentId} succesfully updated");
                 return new ServiceResult(true, "Comment succesfully updated");
             }
             catch (Exception ex)
             {
-                _logger.LogError(
-                    $"An error ocured while updating comment {updateComment.CommentId} to recipe {ex}"
-                );
+                _logger.LogError($"An error ocured while updating comment {commentId}: {ex}");
                 return new ServiceResult(false, "An error ocured while updating comment to recipe");
             }
         }
