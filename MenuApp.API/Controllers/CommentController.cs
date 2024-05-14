@@ -20,7 +20,7 @@ namespace MenuApp.API.Controllers
         }
 
         [HttpPost("leave_comment/{recipeId}")]
-        public async Task<IActionResult> LeaveComment(string recipeId, string commentText)
+        public async Task<IActionResult> LeaveComment(string recipeId, [FromBody]string commentText)
         {
             var result = await _commentService.LeaveComment(recipeId, commentText);
             if (result.Success)

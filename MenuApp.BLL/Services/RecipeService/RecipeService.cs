@@ -361,8 +361,19 @@ namespace MenuApp.BLL.Services.RecipeService
             {
                 var recipe = await _recipesRepository.GetRecipeById(ObjectId.Parse(recipeId));
 
+                RecipeDTO result = new RecipeDTO
+                {
+                    Image = recipe.RecipeImage,
+                    Name = recipe.Name,
+                    RecipeDescriptionElements = recipe.RecipeDescriptionElements,
+                    RecipeType = recipe.RecipeType,
+                    RecipeIngradients = recipe.RecipeIngradients,
+                    CookingDifficulty = recipe.CookingDifficulty,
+                    CookTime = recipe.CookTime
+                };
+
                 _logger.LogInformation($"Recipe {recipeId} successfuly sended");
-                return new ServiceResult(true, "Recipe successfuly sended", recipe);
+                return new ServiceResult(true, "Recipe successfuly sended", result);
             }
             catch (Exception ex)
             {
