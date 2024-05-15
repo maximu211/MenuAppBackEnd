@@ -64,7 +64,8 @@ namespace MenuApp.DAL.Repositories
         public async Task<Users> GetUserByRefreshToken(string refreshToken)
         {
             return await _collection
-                .Find(e => e.RefreshToken == refreshToken)
+                .AsQueryable()
+                .Where(e => e.RefreshToken == refreshToken)
                 .FirstOrDefaultAsync();
         }
 

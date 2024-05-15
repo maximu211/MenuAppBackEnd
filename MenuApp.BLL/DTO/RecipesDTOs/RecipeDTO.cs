@@ -11,6 +11,6 @@ namespace MenuApp.BLL.DTO.RecipesDTOs
         public CookingDifficulty CookingDifficulty { get; set; }
         public required string RecipeType { get; set; }
         public required List<RecipeDescriptionElement> RecipeDescriptionElements { get; set; }
-        public required List<string> RecipeIngradients { get; set; }
+        public required List<string> RecipeIngredients { get; set; }
     }
 }

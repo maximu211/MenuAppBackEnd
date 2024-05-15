@@ -71,7 +71,7 @@ namespace MenuApp.BLL.Services.RecipeService
                     Name = recipeDto.Name,
                     RecipeImage = recipeDto.Image,
                     RecipeDescriptionElements = recipeDto.RecipeDescriptionElements,
-                    RecipeIngradients = recipeDto.RecipeIngradients,
+                    RecipeIngradients = recipeDto.RecipeIngredients,
                     RecipeType = recipeDto.RecipeType,
                     CookingDifficulty = recipeDto.CookingDifficulty,
                     CookTime = recipeDto.CookTime,
@@ -367,7 +367,7 @@ namespace MenuApp.BLL.Services.RecipeService
                     Name = recipe.Name,
                     RecipeDescriptionElements = recipe.RecipeDescriptionElements,
                     RecipeType = recipe.RecipeType,
-                    RecipeIngradients = recipe.RecipeIngradients,
+                    RecipeIngredients = recipe.RecipeIngradients,
                     CookingDifficulty = recipe.CookingDifficulty,
                     CookTime = recipe.CookTime
                 };

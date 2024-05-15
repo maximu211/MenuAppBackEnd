@@ -20,7 +20,7 @@ namespace MenuApp.API.Controllers
         }
 
         [HttpPost("create_recipe")]
-        public async Task<IActionResult> AddRecipe(RecipeDTO recipe)
+        public async Task<IActionResult> AddRecipe([FromBody] RecipeDTO recipe)
         {
             var result = await _recipeService.AddRecipe(recipe);
             if (result.Success == true)

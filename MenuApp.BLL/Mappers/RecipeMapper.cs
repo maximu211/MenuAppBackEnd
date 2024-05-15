@@ -24,7 +24,7 @@ namespace MenuApp.BLL.Mappers
                 RecipeImage = recipeDto.Image,
                 RecipeDescriptionElements = recipeDto.RecipeDescriptionElements,
                 RecipeType = recipeDto.RecipeType,
-                RecipeIngradients = recipeDto.RecipeIngradients,
+                RecipeIngradients = recipeDto.RecipeIngredients,
                 CookingDifficulty = recipeDto.CookingDifficulty,
                 CookTime = recipeDto.CookTime,
             };
