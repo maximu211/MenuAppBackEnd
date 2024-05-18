@@ -168,6 +168,8 @@ namespace MenuApp.DAL.Repositories
 
         public async Task<List<RecipeWithUserModel>> GetRecipesBySearch(string query)
         {
+            var lowerCaseQuery = query.ToLowerInvariant();
+
             return await _recipesCollection
                 .Aggregate()
                 .Lookup<Recipes, Users, RecipeWithUserModel>(
@@ -177,7 +179,7 @@ namespace MenuApp.DAL.Repositories
                     @as: ram => ram.User
                 )
                 .Unwind<RecipeWithUserModel, RecipeWithUserModel>(rwu => rwu.User)
-                .Match(ram => ram.Name.Contains(query))
+                .Match(ram => ram.Name.ToLower().Contains(lowerCaseQuery))
                 .SortByDescending(r => r.CreatedAt)
                 .ToListAsync();
         }

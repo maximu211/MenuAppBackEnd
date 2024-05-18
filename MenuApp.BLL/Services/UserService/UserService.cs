@@ -6,6 +6,7 @@ using MenuApp.DAL.Models.EntityModels;
 using MenuApp.DAL.Repositories;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using MongoDB.Bson;
 
 namespace MenuApp.BLL.Services.UserService
 {
@@ -28,6 +29,7 @@ namespace MenuApp.BLL.Services.UserService
         Task<ServiceResult> ResendConfirmationCode();
         Task<ServiceResult> SetUserImage(string image);
         Task<ServiceResult> GetUserImage();
+        Task<ServiceResult> GetUserPageData(string userId);
     }
 
     public class UserService : IUserService
@@ -727,6 +729,32 @@ namespace MenuApp.BLL.Services.UserService
 
                 _logger.LogInformation($"user {userId} succesfuly get profile photo");
                 return new ServiceResult(true, $"Profile photo successfuly setted", userImage);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error while getting profile photo: {ex}");
+                return new ServiceResult(false, "Error in getting photo");
+            }
+        }
+
+        public async Task<ServiceResult> GetUserPageData(string userId)
+        {
+            try
+            {
+                //var userIdClaim = _httpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(c =>
+                //    c.Type == "userId"
+                //);
+                //if (userIdClaim == null)
+                //{
+                //    throw new Exception("userId claim is missing in the token");
+                //}
+
+                //var requestorsUserId = _jwtTokenGenerator.GetUserIdFromJwtToken(userIdClaim.Value);
+
+                var result = await _userRepository.GetUserPageModel(ObjectId.Parse(userId));
+
+                //_logger.LogInformation($"user {userId} succesfuly get profile photo");
+                return new ServiceResult(true, $"Profile photo successfuly setted", result);
             }
             catch (Exception ex)
             {

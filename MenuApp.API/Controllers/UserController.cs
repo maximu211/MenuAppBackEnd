@@ -167,5 +167,16 @@ namespace MenuApp.API.Controllers
             else
                 return BadRequest(new { result.Message, result.Success });
         }
+
+        //[Authorize]
+        [HttpGet("get_page_data/{userId}")]
+        public async Task<IActionResult> GetUserPageData(string userId)
+        {
+            var result = await _userService.GetUserPageData(userId);
+            if (result.Success)
+                return Ok(result);
+            else
+                return BadRequest(new { result.Message, result.Success });
+        }
     }
 }
