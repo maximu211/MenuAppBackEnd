@@ -1,4 +1,6 @@
-﻿using MenuApp.BLL.DTO.UserDTOs;
+﻿using AutoMapper;
+using MenuApp.BLL.DTO.UserDTOs;
+using MenuApp.BLL.Mappers;
 using MenuApp.BLL.Services.MenuApp.BLL.Services;
 using MenuApp.BLL.Utils.Authorization;
 using MenuApp.BLL.Utils.Email;
@@ -35,14 +37,20 @@ namespace MenuApp.BLL.Services.UserService
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
+        private readonly ISubscriptionRepository _subscriptionRepository;
+        private readonly IRecipeRepository _recipeRepository;
         private readonly IGenerateJwtToken _jwtTokenGenerator;
         private readonly IPasswordHasher _passwordHasher;
         private readonly IEmailSender _emailSender;
         private readonly IConfirmationCodesRepository _confirmationCodesRepository;
         private readonly ILogger<UserService> _logger;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IMapper _mapper;
 
         public UserService(
+            IMapper mapper,
+            IRecipeRepository recipeRepository,
+            ISubscriptionRepository subscriptionRepository,
             IUserRepository userRepository,
             IGenerateJwtToken jwtTokenGenerator,
             IPasswordHasher passwordHasher,
@@ -52,6 +60,9 @@ namespace MenuApp.BLL.Services.UserService
             IHttpContextAccessor httpContextAccessor
         )
         {
+            _mapper = mapper;
+            _recipeRepository = recipeRepository;
+            _subscriptionRepository = subscriptionRepository;
             _userRepository = userRepository;
             _jwtTokenGenerator = jwtTokenGenerator;
             _passwordHasher = passwordHasher;
@@ -620,6 +631,9 @@ namespace MenuApp.BLL.Services.UserService
                     _jwtTokenGenerator.GenerateRefreshToken(userId.ToString())
                 );
 
+                Subscriptions subs = new Subscriptions { UserId = userId, };
+                await _subscriptionRepository.CreateSubsDocument(subs);
+
                 _logger.LogInformation("User {userId} registered successfully", userId);
 
                 return new ServiceResult(
@@ -741,25 +755,53 @@ namespace MenuApp.BLL.Services.UserService
         {
             try
             {
-                //var userIdClaim = _httpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(c =>
-                //    c.Type == "userId"
-                //);
-                //if (userIdClaim == null)
-                //{
-                //    throw new Exception("userId claim is missing in the token");
-                //}
+                var userIdClaim = _httpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(c =>
+                    c.Type == "userId"
+                );
+                if (userIdClaim == null)
+                {
+                    throw new Exception("userId claim is missing in the token");
+                }
 
-                //var requestorsUserId = _jwtTokenGenerator.GetUserIdFromJwtToken(userIdClaim.Value);
+                var requestorsUserId = _jwtTokenGenerator.GetUserIdFromJwtToken(userIdClaim.Value);
+                var userObjectId = ObjectId.Parse(userId);
 
-                var result = await _userRepository.GetUserPageModel(ObjectId.Parse(userId));
+                var userSubscribesTask = _subscriptionRepository.GetSubsByUserId(userObjectId);
+                var recipesTask = _recipeRepository.GetRecipesByUserId(userObjectId);
 
-                //_logger.LogInformation($"user {userId} succesfuly get profile photo");
-                return new ServiceResult(true, $"Profile photo successfuly setted", result);
+                await Task.WhenAll(userSubscribesTask, recipesTask);
+
+                var userSubscribes = userSubscribesTask.Result;
+                var recipes = recipesTask
+                    .Result.Select(recipe =>
+                        CardRecipeMapper.MapToCardRecipeDTO(recipe, requestorsUserId, _mapper)
+                    )
+                    .ToList();
+
+                var subs = userSubscribes.Subscribers;
+
+                var userPageModel = new UserPageModel
+                {
+                    CardRecipes = recipes,
+                    IsSubscribed = subs.Contains(requestorsUserId),
+                    SubscribedUsersCount = subs.Count(),
+                    IsOwner = userObjectId == requestorsUserId,
+                    SubscribedToCount = await _subscriptionRepository.GetSubscribedUsersCount(
+                        userObjectId
+                    ),
+                    User = recipes.FirstOrDefault()!.User
+                };
+
+                return new ServiceResult(
+                    true,
+                    "Profile data successfully retrieved",
+                    userPageModel
+                );
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error while getting profile photo: {ex}");
-                return new ServiceResult(false, "Error in getting photo");
+                _logger.LogError($"Error while getting user page data: {ex}");
+                return new ServiceResult(false, "Error in getting user page data");
             }
         }
     }

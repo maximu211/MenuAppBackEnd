@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using AutoMapper;
-using MenuApp.BLL.DTO.SubscriptionDTOs;
+﻿using AutoMapper;
 using MenuApp.BLL.DTO.UserDTOs;
 using MenuApp.BLL.Services.MenuApp.BLL.Services;
 using MenuApp.BLL.Utils.Authorization;
@@ -18,8 +12,8 @@ namespace MenuApp.BLL.Services.SubscriptionService
 {
     public interface ISubscriptionService
     {
-        Task<ServiceResult> SubscribeTo(SubscriptionDTO subscribeTo);
-        Task<ServiceResult> UnsubscribeFrom(SubscriptionDTO unsubscribeFrom);
+        Task<ServiceResult> SubscribeTo(string userId);
+        Task<ServiceResult> UnsubscribeFrom(string userId);
         Task<ServiceResult> GetSubscribers();
         Task<ServiceResult> GetSubscribedUsers();
     }
@@ -114,7 +108,7 @@ namespace MenuApp.BLL.Services.SubscriptionService
             }
         }
 
-        public async Task<ServiceResult> SubscribeTo(SubscriptionDTO subscribeTo)
+        public async Task<ServiceResult> SubscribeTo(string userId)
         {
             try
             {
@@ -126,23 +120,23 @@ namespace MenuApp.BLL.Services.SubscriptionService
                     throw new Exception("userId claim is missing in the token");
                 }
 
-                ObjectId userId = _jwtGenerator.GetUserIdFromJwtToken(userIdClaim.Value);
+                ObjectId requestorsId = _jwtGenerator.GetUserIdFromJwtToken(userIdClaim.Value);
 
-                await _subscriptionRepository.SubscribeTo(userId, ObjectId.Parse(subscribeTo.Id));
+                await _subscriptionRepository.SubscribeTo(requestorsId, ObjectId.Parse(userId));
 
                 _logger.LogInformation(
-                    $"User {userId} successfuly subscribed to user {subscribeTo}"
+                    $"User {requestorsId} successfuly subscribed to user {userId}"
                 );
                 return new ServiceResult(true, "Successfuly subscribed");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error in subscribe to user {subscribeTo}: {ex}");
+                _logger.LogError($"Error in subscribe to user {userId}: {ex}");
                 return new ServiceResult(false, "Subscribe Error");
             }
         }
 
-        public async Task<ServiceResult> UnsubscribeFrom(SubscriptionDTO unsubscribeFrom)
+        public async Task<ServiceResult> UnsubscribeFrom(string userId)
         {
             try
             {
@@ -154,21 +148,18 @@ namespace MenuApp.BLL.Services.SubscriptionService
                     throw new Exception("userId claim is missing in the token");
                 }
 
-                ObjectId userId = _jwtGenerator.GetUserIdFromJwtToken(userIdClaim.Value);
+                ObjectId requestorsId = _jwtGenerator.GetUserIdFromJwtToken(userIdClaim.Value);
 
-                await _subscriptionRepository.UnsubscribeFrom(
-                    userId,
-                    ObjectId.Parse(unsubscribeFrom.Id)
-                );
+                await _subscriptionRepository.UnsubscribeFrom(requestorsId, ObjectId.Parse(userId));
 
                 _logger.LogInformation(
-                    $"User {userId} successfuly unsubscribed from user {unsubscribeFrom}"
+                    $"User {requestorsId} successfuly unsubscribed from user {userId}"
                 );
                 return new ServiceResult(true, "User successfuly unsubscribed");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error in unsubscribe to user {unsubscribeFrom}: {ex}");
+                _logger.LogError($"Error in unsubscribe to user {userId}: {ex}");
                 return new ServiceResult(false, "Unsubscribe error");
             }
         }

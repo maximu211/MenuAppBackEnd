@@ -13,6 +13,9 @@ namespace MenuApp.DAL.Repositories
         Task UnsubscribeFrom(ObjectId user, ObjectId unsubscribeFrom);
         Task<List<Users>> GetSubscribers(ObjectId userId);
         Task<List<Users>> GetSubscribedUsers(ObjectId userId);
+        Task CreateSubsDocument(Subscriptions subs);
+        Task<Subscriptions> GetSubsByUserId(ObjectId userId);
+        Task<int> GetSubscribedUsersCount(ObjectId userId);
     }
 
     public class SubscriptionRepository : ISubscriptionRepository
@@ -93,6 +96,30 @@ namespace MenuApp.DAL.Repositories
             var subscribedUsers = result.SelectMany(s => s.SubscribedUsers).ToList();
 
             return subscribedUsers ?? new List<Users>();
+        }
+
+        public async Task<int> GetSubscribedUsersCount(ObjectId userId)
+        {
+            var result = await _subscriptionsCollection
+                .Aggregate()
+                .Match(sub => sub.Subscribers.Contains(userId))
+                .Count()
+                .FirstOrDefaultAsync();
+
+            return (int)(result?.Count ?? 0);
+        }
+
+        public async Task CreateSubsDocument(Subscriptions subs)
+        {
+            await _subscriptionsCollection.InsertOneAsync(subs);
+        }
+
+        public async Task<Subscriptions> GetSubsByUserId(ObjectId userId)
+        {
+            return await _subscriptionsCollection
+                .AsQueryable()
+                .Where(subs => subs.UserId.Equals(userId))
+                .FirstOrDefaultAsync();
         }
     }
 }

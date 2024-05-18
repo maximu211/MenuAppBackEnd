@@ -96,7 +96,7 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-builder.WebHost.UseUrls("https://localhost:5001");
+//builder.WebHost.UseUrls("https://localhost:5001");
 
 if (app.Environment.IsDevelopment())
 {

@@ -1,5 +1,4 @@
-﻿using MenuApp.BLL.DTO.SubscriptionDTOs;
-using MenuApp.BLL.Services.SubscriptionService;
+﻿using MenuApp.BLL.Services.SubscriptionService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -19,27 +18,27 @@ namespace MenuApp.API.Controllers
             _subscriptionService = subscriptionService;
         }
 
-        [HttpPost("subscribe_to")]
-        public async Task<IActionResult> SubscribeTo(SubscriptionDTO subscribeTo)
+        [HttpPost("subscribe_to/{userId}")]
+        public async Task<IActionResult> SubscribeTo(string userId)
         {
-            var result = await _subscriptionService.SubscribeTo(subscribeTo);
+            var result = await _subscriptionService.SubscribeTo(userId);
             if (result.Success)
                 return Ok(result);
             else
                 return BadRequest(new { result.Message, result.Success });
         }
 
-        [HttpPost("unsubscribe_from")]
-        public async Task<IActionResult> UnsubscribeFrom(SubscriptionDTO unsubscribeFrom)
+        [HttpPost("unsubscribe_from/{userId}")]
+        public async Task<IActionResult> UnsubscribeFrom(string userId)
         {
-            var result = await _subscriptionService.UnsubscribeFrom(unsubscribeFrom);
+            var result = await _subscriptionService.UnsubscribeFrom(userId);
             if (result.Success)
                 return Ok(result);
             else
                 return BadRequest(new { result.Message, result.Success });
         }
 
-        [HttpGet("get_subscribers")]
+        [HttpGet("get_subscribed_users")]
         public async Task<IActionResult> GetSubscribers()
         {
             var result = await _subscriptionService.GetSubscribers();
@@ -49,7 +48,7 @@ namespace MenuApp.API.Controllers
                 return BadRequest(new { result.Message, result.Success });
         }
 
-        [HttpGet("get_subscribed_users")]
+        [HttpGet("get_subscribers")]
         public async Task<IActionResult> GetSubscribedUsers()
         {
             var result = await _subscriptionService.GetSubscribedUsers();

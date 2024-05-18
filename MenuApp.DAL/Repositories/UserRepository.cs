@@ -28,7 +28,6 @@ namespace MenuApp.DAL.Repositories
         Task SetUserImage(ObjectId userId, string image);
         Task<string> GetUserImageByUserId(ObjectId userId);
         Task<List<Users>> GetUsersBySearch(string query);
-        Task<UserPageModel> GetUserPageModel(ObjectId userId);
     }
 
     public class UserRepository : IUserRepository
@@ -180,28 +179,6 @@ namespace MenuApp.DAL.Repositories
                 .AsQueryable()
                 .Where(u => u.Username.ToLowerInvariant().Contains(lowerCaseQuery))
                 .ToListAsync();
-        }
-
-        public async Task<UserPageModel> GetUserPageModel(ObjectId userId)
-        {
-            return await _subscriptionsCollection
-                .Aggregate()
-                .Match(subs => subs.UserId.Equals(userId))
-                .Lookup<Subscriptions, Users, UserPageModel>(
-                    _usersCollection,
-                    subs => subs.UserId,
-                    user => user.Id,
-                    model => model.User
-                )
-                .Unwind<UserPageModel, UserPageModel>(model => model.User)
-                .Lookup<UserPageModel, Recipes, UserPageModel>(
-                    _recipesCollection,
-                    u => u.Id,
-                    r => r.CreatorId,
-                    model => model.Recipes
-                )
-                .As<UserPageModel>()
-                .FirstAsync();
         }
     }
 }
