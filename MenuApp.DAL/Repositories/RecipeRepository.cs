@@ -1,4 +1,5 @@
-﻿using MenuApp.DAL.DataBaseContext;
+﻿using System.Linq;
+using MenuApp.DAL.DataBaseContext;
 using MenuApp.DAL.Models.AggregetionModels;
 using MenuApp.DAL.Models.EntityModels;
 using MongoDB.Bson;
@@ -84,13 +85,13 @@ namespace MenuApp.DAL.Repositories
         {
             {
                 var userSubscriptions = await _subscriptionsCollection
-                    .Find(sub => sub.UserId == userId)
-                    .FirstOrDefaultAsync();
+                    .AsQueryable()
+                    .Where(sub => sub.Subscribers.Contains(userId))
+                    .Select(subs => subs.UserId)
+                    .ToListAsync();
 
                 if (userSubscriptions == null)
                     return new List<RecipeWithUserModel>();
-
-                var subscribedUserIds = userSubscriptions.Subscribers;
 
                 var pipeline = await _recipesCollection
                     .Aggregate()
@@ -101,7 +102,7 @@ namespace MenuApp.DAL.Repositories
                         @as: (RecipeWithUserModel recipeWithUser) => recipeWithUser.User
                     )
                     .Unwind<RecipeWithUserModel, RecipeWithUserModel>(rwu => rwu.User)
-                    .Match(recipe => subscribedUserIds.Contains(recipe.User.Id))
+                    .Match(recipe => userSubscriptions.Contains(recipe.User.Id))
                     .SortByDescending(rwu => rwu.CreatedAt)
                     .ToListAsync();
 

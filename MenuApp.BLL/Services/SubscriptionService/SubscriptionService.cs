@@ -14,8 +14,8 @@ namespace MenuApp.BLL.Services.SubscriptionService
     {
         Task<ServiceResult> SubscribeTo(string userId);
         Task<ServiceResult> UnsubscribeFrom(string userId);
-        Task<ServiceResult> GetSubscribers();
-        Task<ServiceResult> GetSubscribedUsers();
+        Task<ServiceResult> GetSubscribers(string userId);
+        Task<ServiceResult> GetSubscribedUsers(string userId);
     }
 
     public class SubscriptionService : ISubscriptionService
@@ -42,22 +42,12 @@ namespace MenuApp.BLL.Services.SubscriptionService
             _mapper = mapper;
         }
 
-        public async Task<ServiceResult> GetSubscribedUsers()
+        public async Task<ServiceResult> GetSubscribedUsers(string userId)
         {
             try
             {
-                var userIdClaim = _httpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(c =>
-                    c.Type == "userId"
-                );
-                if (userIdClaim == null)
-                {
-                    throw new Exception("userId claim is missing in the token");
-                }
-
-                ObjectId userId = _jwtGenerator.GetUserIdFromJwtToken(userIdClaim.Value);
-
                 List<UserDTO> subscribedUsersList = (
-                    await _subscriptionRepository.GetSubscribedUsers(userId)
+                    await _subscriptionRepository.GetSubscribedUsers(ObjectId.Parse(userId))
                 )
                     .Select(user => _mapper.Map<UserDTO>(user))
                     .ToList();
@@ -76,22 +66,12 @@ namespace MenuApp.BLL.Services.SubscriptionService
             }
         }
 
-        public async Task<ServiceResult> GetSubscribers()
+        public async Task<ServiceResult> GetSubscribers(string userId)
         {
             try
             {
-                var userIdClaim = _httpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(c =>
-                    c.Type == "userId"
-                );
-                if (userIdClaim == null)
-                {
-                    throw new Exception("userId claim is missing in the token");
-                }
-
-                ObjectId userId = _jwtGenerator.GetUserIdFromJwtToken(userIdClaim.Value);
-
                 List<UserDTO> subscribersDTOList = _mapper.Map<List<UserDTO>>(
-                    await _subscriptionRepository.GetSubscribers(userId)
+                    await _subscriptionRepository.GetSubscribers(ObjectId.Parse(userId))
                 );
 
                 _logger.LogInformation($"User {userId} successfuly get subscribers list");

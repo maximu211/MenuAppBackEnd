@@ -32,21 +32,21 @@ namespace MenuApp.DAL.Repositories
         public async Task SubscribeTo(ObjectId user, ObjectId subscribeTo)
         {
             var existingSubscription = await _subscriptionsCollection
-                .Find(s => s.UserId == user)
+                .Find(s => s.UserId == subscribeTo)
                 .FirstOrDefaultAsync();
 
             if (existingSubscription == null)
             {
                 existingSubscription = new Subscriptions
                 {
-                    UserId = user,
+                    UserId = subscribeTo,
                     Subscribers = new List<ObjectId>()
                 };
 
                 await _subscriptionsCollection.InsertOneAsync(existingSubscription);
             }
 
-            existingSubscription.Subscribers.Add(subscribeTo);
+            existingSubscription.Subscribers.Add(user);
 
             var filter = Builders<Subscriptions>.Filter.Eq(s => s.Id, existingSubscription.Id);
             var update = Builders<Subscriptions>.Update.Set(
@@ -58,8 +58,8 @@ namespace MenuApp.DAL.Repositories
 
         public async Task UnsubscribeFrom(ObjectId user, ObjectId unsubscribeFrom)
         {
-            var filter = Builders<Subscriptions>.Filter.Eq(s => s.UserId, user);
-            var update = Builders<Subscriptions>.Update.Pull(s => s.Subscribers, unsubscribeFrom);
+            var filter = Builders<Subscriptions>.Filter.Eq(s => s.UserId, unsubscribeFrom);
+            var update = Builders<Subscriptions>.Update.Pull(s => s.Subscribers, user);
 
             await _subscriptionsCollection.UpdateOneAsync(filter, update);
         }

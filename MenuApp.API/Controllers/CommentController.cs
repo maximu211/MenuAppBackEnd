@@ -20,7 +20,10 @@ namespace MenuApp.API.Controllers
         }
 
         [HttpPost("leave_comment/{recipeId}")]
-        public async Task<IActionResult> LeaveComment(string recipeId, [FromBody]string commentText)
+        public async Task<IActionResult> LeaveComment(
+            string recipeId,
+            [FromBody] string commentText
+        )
         {
             var result = await _commentService.LeaveComment(recipeId, commentText);
             if (result.Success)
@@ -50,7 +53,7 @@ namespace MenuApp.API.Controllers
         }
 
         [HttpPatch("update_comment/{commentId}")]
-        public async Task<IActionResult> UpdateComment(string commentId, string comment)
+        public async Task<IActionResult> UpdateComment(string commentId, [FromBody] string comment)
         {
             var result = await _commentService.UpdateComment(commentId, comment);
             if (result.Success)

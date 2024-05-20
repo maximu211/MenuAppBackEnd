@@ -10,7 +10,6 @@ namespace MenuApp.DAL.Repositories
 {
     public interface IUserRepository
     {
-        Task<IEnumerable<Users>> GetUsers();
         Task AddUser(Users user);
         Task<bool> IsUserExistsByEmail(string userName);
         Task<Users> GetUserByRefreshToken(string refreshToken);
@@ -28,6 +27,7 @@ namespace MenuApp.DAL.Repositories
         Task SetUserImage(ObjectId userId, string image);
         Task<string> GetUserImageByUserId(ObjectId userId);
         Task<List<Users>> GetUsersBySearch(string query);
+        Task<Users> GetUserById(ObjectId userId);
     }
 
     public class UserRepository : IUserRepository
@@ -43,9 +43,12 @@ namespace MenuApp.DAL.Repositories
             _recipesCollection = context.GetCollection<Recipes>();
         }
 
-        public async Task<IEnumerable<Users>> GetUsers()
+        public async Task<Users> GetUserById(ObjectId userId)
         {
-            return await _usersCollection.Find(entity => true).ToListAsync();
+            return await _usersCollection
+                .AsQueryable()
+                .Where(user => user.Id.Equals(userId))
+                .FirstOrDefaultAsync();
         }
 
         public async Task AddUser(Users user)

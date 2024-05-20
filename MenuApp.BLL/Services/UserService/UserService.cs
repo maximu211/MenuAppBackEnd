@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using MenuApp.BLL.DTO.RecipesDTOs;
 using MenuApp.BLL.DTO.UserDTOs;
 using MenuApp.BLL.Mappers;
 using MenuApp.BLL.Services.MenuApp.BLL.Services;
@@ -772,24 +773,32 @@ namespace MenuApp.BLL.Services.UserService
                 await Task.WhenAll(userSubscribesTask, recipesTask);
 
                 var userSubscribes = userSubscribesTask.Result;
-                var recipes = recipesTask
-                    .Result.Select(recipe =>
+                var recipes = recipesTask.Result;
+
+                List<CardRecipeDTO> recipeDtos = recipes
+                    .Select(recipe =>
                         CardRecipeMapper.MapToCardRecipeDTO(recipe, requestorsUserId, _mapper)
                     )
                     .ToList();
+
+                Users? user = null;
+                if (!recipes.Any())
+                {
+                    user = await _userRepository.GetUserById(userObjectId);
+                }
 
                 var subs = userSubscribes.Subscribers;
 
                 var userPageModel = new UserPageModel
                 {
-                    CardRecipes = recipes,
+                    CardRecipes = recipeDtos,
                     IsSubscribed = subs.Contains(requestorsUserId),
                     SubscribedUsersCount = subs.Count(),
                     IsOwner = userObjectId == requestorsUserId,
                     SubscribedToCount = await _subscriptionRepository.GetSubscribedUsersCount(
                         userObjectId
                     ),
-                    User = recipes.FirstOrDefault()!.User
+                    User = recipeDtos.FirstOrDefault()?.User ?? _mapper.Map<Users, UserDTO>(user!)
                 };
 
                 return new ServiceResult(

@@ -70,7 +70,7 @@ namespace MenuApp.API.Controllers
         }
 
         [HttpPut("update_recipe/{recipeId}")]
-        public async Task<IActionResult> UpdateRecipe(string recipeId, RecipeDTO recipe)
+        public async Task<IActionResult> UpdateRecipe(string recipeId, [FromBody] RecipeDTO recipe)
         {
             var result = await _recipeService.UpdateRecipe(recipeId, recipe);
             if (result.Success)

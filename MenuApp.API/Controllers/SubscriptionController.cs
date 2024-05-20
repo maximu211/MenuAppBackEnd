@@ -1,4 +1,5 @@
 ﻿using MenuApp.BLL.Services.SubscriptionService;
+using MenuApp.DAL.Models.EntityModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -38,20 +39,20 @@ namespace MenuApp.API.Controllers
                 return BadRequest(new { result.Message, result.Success });
         }
 
-        [HttpGet("get_subscribed_users")]
-        public async Task<IActionResult> GetSubscribers()
+        [HttpGet("get_subscribers/{userId}")]
+        public async Task<IActionResult> GetSubscribers(string userId)
         {
-            var result = await _subscriptionService.GetSubscribers();
+            var result = await _subscriptionService.GetSubscribers(userId);
             if (result.Success)
                 return Ok(result);
             else
                 return BadRequest(new { result.Message, result.Success });
         }
 
-        [HttpGet("get_subscribers")]
-        public async Task<IActionResult> GetSubscribedUsers()
+        [HttpGet("get_subscribed_users/{userId}")]
+        public async Task<IActionResult> GetSubscribedUsers(string userId)
         {
-            var result = await _subscriptionService.GetSubscribedUsers();
+            var result = await _subscriptionService.GetSubscribedUsers(userId);
             if (result.Success)
                 return Ok(result);
             else

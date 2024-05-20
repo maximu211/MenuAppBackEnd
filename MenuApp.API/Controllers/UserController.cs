@@ -168,7 +168,7 @@ namespace MenuApp.API.Controllers
                 return BadRequest(new { result.Message, result.Success });
         }
 
-        //[Authorize]
+        [Authorize]
         [HttpGet("get_page_data/{userId}")]
         public async Task<IActionResult> GetUserPageData(string userId)
         {
